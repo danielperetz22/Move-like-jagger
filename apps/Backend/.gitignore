@@ -1,0 +1,14 @@
+# Node & build
+node_modules/
+dist/
+
+# Coverage reports
+coverage/
+
+# Environment
+.env
+
+# Uploads
+uploads/
+
+
