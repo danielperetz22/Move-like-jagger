@@ -14,7 +14,7 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema(
   {
     admin: { type: Boolean, default: false },
-    _id: { type: String, required: true },
+    _id: { type: String, default: () => new mongoose.Types.ObjectId().toString()},
     email: { type: String, required: true, unique: true },
     username: { type: String, required: true },
     password: { type: String, default: '' },

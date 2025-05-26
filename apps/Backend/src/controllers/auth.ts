@@ -1,4 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
+import { NextFunction, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt, { Secret, SignOptions, JwtPayload } from 'jsonwebtoken';
 import { BaseController } from './base';
@@ -18,8 +20,8 @@ const REFRESH_TOKEN_SECRET: Secret = process.env.REFRESH_TOKEN_SECRET!;
 type Tokens = { accessToken: string; refreshToken: string };
 
 function generateTokens(userId: string): Tokens {
-    const accessExpiration  = process.env.TOKEN_EXPIRATION  ;
-    const refreshExpiration = process.env.REFRESH_TOKEN_EXPIRATION ;
+    const accessExpiration  = process.env.ACCESS_TOKEN_EXPIRY  ;
+    const refreshExpiration = process.env.REFRESH_TOKEN_EXPIRY;
   
     const accessOpts: SignOptions  = { expiresIn: accessExpiration  as SignOptions['expiresIn'] };
     const refreshOpts: SignOptions = { expiresIn: refreshExpiration as SignOptions['expiresIn'] };
@@ -166,4 +168,32 @@ async create(req: Request, res: Response): Promise<void> {
       res.status(400).json({ message: err.message });
     }
   }
+
 }
+  
+  export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+    if (!token) {
+       res.status(401).json({ message: 'Access denied: Missing token' });
+         return;
+    }
+    if (!process.env.ACCESS_TOKEN_SECRET) {
+       res.status(500).json({ message: 'Server error: Missing token secret' });
+         return;
+    }
+  
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+         res.status(401).json({ message: 'Access denied: Invalid token' });
+        return;
+      }
+      if (typeof decoded === 'object' && decoded !== null && '_id' in decoded) {
+        req.user = { _id: decoded._id } as IUser; 
+      } else {
+        res.status(401).json({ message: 'Access denied: Invalid token payload' });
+        return;
+      }
+      next();
+    });
+  };
