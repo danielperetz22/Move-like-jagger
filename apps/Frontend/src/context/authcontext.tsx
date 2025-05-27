@@ -36,6 +36,24 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
   const [userId, setUserId] = useState<string | null>(localStorage.getItem('userId'));
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!localStorage.getItem('token'));
 
+  // Add type definitions for auth responses
+  interface TokenResponse {
+    accessToken: string;
+    refreshToken: string;
+  }
+
+  interface AuthResponse {
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
+    user: {
+      _id: string;
+      username: string;
+      email: string;
+    };
+  }
+
   // Verify token on mount and refresh if needed
   useEffect(() => {
     const verifyToken = async () => {
@@ -55,7 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
           // Try to refresh the token if we have a refresh token
           if (refreshToken) {
             try {
-              const response = await axiosInstance.post('/auth/refresh-token', { refreshToken });
+              const response = await axiosInstance.post<TokenResponse>('/auth/refresh-token', { refreshToken });
               
               // Update tokens in state and localStorage
               const newToken = response.data.accessToken;
@@ -114,10 +132,12 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axiosInstance.post('/auth/login', { email, password });
+      const response = await axiosInstance.post<AuthResponse>('/auth/login', { email, password });
       
-      // Save tokens and user ID
-      const { accessToken, refreshToken, userId } = response.data;
+      // Extract tokens and user ID from the nested response structure
+      const accessToken = response.data.tokens.accessToken;
+      const refreshToken = response.data.tokens.refreshToken;
+      const userId = response.data.user._id;
       
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
@@ -163,12 +183,14 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
         requestData = data;
       }
       
-      const response = await axiosInstance.post('/auth/register', requestData, {
+      const response = await axiosInstance.post<AuthResponse>('/auth/register', requestData, {
         headers: data.profileImage ? { 'Content-Type': 'multipart/form-data' } : undefined
       });
       
-      // Save tokens and user ID
-      const { accessToken, refreshToken, userId } = response.data;
+      // Extract tokens and user ID from the nested response structure
+      const accessToken = response.data.tokens.accessToken;
+      const refreshToken = response.data.tokens.refreshToken;
+      const userId = response.data.user._id;
       
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refreshToken', refreshToken);

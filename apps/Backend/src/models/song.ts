@@ -20,7 +20,7 @@ const SongSchema = new mongoose.Schema({
   rawLyrics: { 
     type: String, 
     required: true,
-    default: 'Lyrics not available' 
+    default: 'Sample lyrics will be generated' // Simple string default
   },    
   chords:    { 
     type: [ChordDefinitionSchema], 

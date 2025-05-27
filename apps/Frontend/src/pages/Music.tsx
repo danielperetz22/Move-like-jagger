@@ -21,7 +21,8 @@ interface Song {
   _id: string;
   title: string;
   artist: string;
-  lyrics: string;
+  rawLyrics?: string; // Changed from lyrics to rawLyrics
+  chords: any[];
 }
 
 interface Participant {
@@ -92,15 +93,21 @@ const MusicPage: React.FC = () => {
         
         // Get songs (for admins)
         if (userResponse.data.admin) {
-          // Make sure this endpoint is correct - it might need to be '/api/songs' or similar
           const songsResponse = await axiosInstance.get<Song[]>('/songs');
           
-          // Log response to debug
           console.log('Songs response:', songsResponse.data);
           
-          // Check if the response has the expected structure
           if (Array.isArray(songsResponse.data)) {
-            setSongs(songsResponse.data);
+            // Make sure we have all required fields for each song
+            const validSongs = songsResponse.data.map(song => ({
+              _id: song._id,
+              title: song.title || 'Untitled',
+              artist: song.artist || 'Unknown Artist',
+              rawLyrics: song.rawLyrics || '',
+              chords: song.chords || []
+            }));
+            
+            setSongs(validSongs);
           } else {
             console.error('Songs response is not an array:', songsResponse.data);
             setSongs([]);
@@ -256,9 +263,15 @@ const MusicPage: React.FC = () => {
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Select a song --</option>
-                {songs.map(song => (
-                  <option key={song._id} value={song._id}>{song.artist} - {song.title}</option>
-                ))}
+                {songs && songs.length > 0 ? (
+                  songs.map(song => (
+                    <option key={song._id} value={song._id}>
+                      {song.artist} - {song.title}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No songs available</option>
+                )}
               </select>
             </div>
           </div>

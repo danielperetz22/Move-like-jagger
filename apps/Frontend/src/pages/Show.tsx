@@ -3,30 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authcontext';
 import axiosInstance from '../axiosinstance';
 import Button from '../components/ui/Button';
-import Lyrics from '../components/Lyrics';
-import Chord from '../components/Chord';
-
-interface User {
-  _id: string;
-  username: string;
-  instrument: string;
-}
-
-interface Song {
-  _id: string;
-  title: string;
-  artist: string;
-  lyrics: string;
-  chords?: {
-    position: number;
-    value: string;
-  }[];
-}
-
-interface Participant {
-  userId: User;
-  status: 'pending' | 'accepted' | 'rejected';
-}
+import LyricsDisplay from '../components/LyricsDisplay';
 
 interface ShowDetails {
   _id: string;
@@ -39,10 +16,30 @@ interface ShowDetails {
     _id: string;
     name: string;
   };
-  song: Song;
-  participants: Participant[];
+  song: {
+    _id: string;
+    title: string;
+    artist: string;
+    rawLyrics?: string;
+    chords: any[];
+  };
+  participants: Array<{
+    userId: {
+      _id: string;
+      username: string;
+      instrument: string;
+    };
+    status: 'pending' | 'accepted' | 'rejected';
+  }>;
   status: 'created' | 'active' | 'completed';
   createdAt: string;
+}
+
+interface UserResponse {
+  _id: string;
+  username: string;
+  instrument: string;
+  admin: boolean;
 }
 
 const ShowPage: React.FC = () => {
@@ -56,17 +53,17 @@ const ShowPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchShowDetails = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         
         // Get user details to determine instrument and admin status
-        const userResponse = await axiosInstance.get('/auth/me');
+        const userResponse = await axiosInstance.get<UserResponse>('/auth/me');
         setUserInstrument(userResponse.data.instrument);
         setIsAdmin(userResponse.data.admin);
         
         // Get show details
-        const showResponse = await axiosInstance.get(`/shows/${showId}`);
+        const showResponse = await axiosInstance.get<ShowDetails>(`/shows/${showId}`);
         setShow(showResponse.data);
       } catch (err: any) {
         console.error('Error fetching show details:', err);
@@ -77,7 +74,7 @@ const ShowPage: React.FC = () => {
     };
 
     if (showId) {
-      fetchShowDetails();
+      fetchData();
     }
   }, [showId, userId]);
 
@@ -138,7 +135,6 @@ const ShowPage: React.FC = () => {
   }
 
   const isVocalist = userInstrument?.toLowerCase() === 'vocals';
-  const userParticipant = show.participants.find(p => p.userId._id === userId);
   const isCreator = show.createdBy._id === userId;
 
   return (
@@ -171,24 +167,12 @@ const ShowPage: React.FC = () => {
             
             {/* Display lyrics */}
             <div className="mb-6">
-              {show.song.lyrics.split('\n').map((line, i) => {
-                // If user is not a vocalist and we have chords, display them
-                if (!isVocalist && show.song.chords && show.song.chords.some(c => c.position === i)) {
-                  return (
-                    <div key={i} className="mb-4">
-                      <div className="flex flex-wrap mb-1">
-                        {show.song.chords
-                          .filter(c => c.position === i)
-                          .map((chord, idx) => (
-                            <Chord key={idx} chordSymbol={chord.value} />
-                          ))}
-                      </div>
-                      <p>{line}</p>
-                    </div>
-                  );
-                }
-                return <p key={i} className="mb-2">{line}</p>;
-              })}
+              {show && show.song && (
+                <LyricsDisplay 
+                  artist={show.song.artist} 
+                  title={show.song.title} 
+                />
+              )}
             </div>
           </div>
         </div>
