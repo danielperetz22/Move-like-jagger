@@ -1,16 +1,17 @@
 import { Router } from 'express';
 import { authMiddleware } from '../controllers/auth';
-import { getAllSongs, getSongById, createSong, searchAndSaveSong, searchSongs } from '../controllers/song';
-
+import {
+    getAllSongs,
+    getSongById,
+    createSong,
+    searchSongs
+} from '../controllers/song';
+    
 const router = Router();
-
-// require valid JWT and admin flag
 router.use(authMiddleware);
 
-// only admins can CRUD their songs
 router.get('/', getAllSongs);
 router.get('/:id', getSongById);
-router.get('/search/:artist/:title', searchAndSaveSong);
 router.get('/search', searchSongs);
 router.post('/', createSong);
 

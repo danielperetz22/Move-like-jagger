@@ -4,12 +4,10 @@ interface ChordProps {
   chordSymbol: string;
 }
 
-const Chord: React.FC<ChordProps> = ({ chordSymbol }) => {
-  return (
-    <div className="inline-block px-3 py-1 m-1 bg-gray-200 rounded text-center">
-      <span className="font-medium">{chordSymbol}</span>
-    </div>
-  );
-};
+const Chord: React.FC<ChordProps> = ({ chordSymbol }) => (
+  <div className="inline-block px-3 py-2 bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 transition-colors">
+    <span className="font-medium">{chordSymbol}</span>
+  </div>
+);
 
 export default Chord;

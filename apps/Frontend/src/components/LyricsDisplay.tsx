@@ -34,23 +34,25 @@ const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ artist, title }) => {
           setError('No lyrics available for this song');
         }
         
-        // Optionally fetch chords (if you have a chords API)
+        // Fetch chords (will now get fallback data from the backend if API fails)
         try {
-          const chordsResponse = await axiosInstance.get('/chords', {
-            params: { artist, title }
-          });
+            const chordsResponse = await axiosInstance.get<any[]>('/chords', {
+                params: { artist, title }
+            });
           
-          if (chordsResponse.data && Array.isArray(chordsResponse.data)) {
             setChords(chordsResponse.data);
-          }
+
         } catch (chordsError) {
           console.log('Chords not available for this song');
-          // Don't set an error, just continue without chords
+          // Set empty chords array, but don't show error
+          setChords([]);
         }
         
       } catch (err) {
         console.error('Error fetching lyrics:', err);
         setError('Failed to load lyrics');
+        // Provide default message if lyrics API fails
+        setLyrics(`Playing: ${artist} - ${title}\n\n[Lyrics will appear here when available]`);
       } finally {
         setIsLoading(false);
       }
@@ -65,36 +67,44 @@ const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ artist, title }) => {
     return <div className="p-4 text-center">Loading lyrics...</div>;
   }
 
-  if (error) {
-    return <div className="p-4 text-red-500">{error}</div>;
-  }
-
   // Function to render lyrics with line breaks
   const renderLyrics = () => {
     return lyrics.split('\n').map((line, index) => (
-      <p key={index} className={line.trim() === '' ? 'h-4' : 'my-1'}>
+      <p key={index} className={line.trim() === '' ? 'h-4' : 'my-1 text-lg leading-relaxed'}>
         {line || '\u00A0'}
       </p>
     ));
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-xl font-semibold mb-4">{artist} - {title}</h3>
+    <div className="bg-gray-800 text-white rounded-lg shadow-md p-6">
+      <h3 className="text-2xl font-semibold mb-4 text-blue-300">{artist} - {title}</h3>
       
       {chords.length > 0 && (
-        <div className="mb-4 p-3 bg-gray-100 rounded-lg">
-          <h4 className="text-sm font-medium mb-2">Chords:</h4>
-          <div className="flex flex-wrap">
+        <div className="mb-6 p-4 bg-gray-700 rounded-lg">
+          <h4 className="text-sm font-medium mb-3 text-gray-300">Chord Progression:</h4>
+          <div className="flex flex-wrap gap-2">
             {chords.map((chord, index) => (
               <Chord key={index} chordSymbol={chord.name} />
             ))}
           </div>
+          <p className="mt-3 text-xs text-gray-400">
+            Tip: Play these chords in sequence following the song's rhythm
+          </p>
         </div>
       )}
       
-      <div className="whitespace-pre-line font-medium">
-        {renderLyrics()}
+      {error ? (
+        <div className="p-4 text-yellow-300">{error}</div>
+      ) : (
+        <div className="whitespace-pre-line font-medium">
+          {renderLyrics()}
+        </div>
+      )}
+      
+      <div className="mt-6 text-xs text-gray-400">
+        <p>Note: For complete and accurate lyrics, please refer to official licensed sources.</p>
+        <p>This application is for educational purposes only.</p>
       </div>
     </div>
   );
