@@ -170,7 +170,10 @@ const Show: React.FC = () => {
         style={{ height: 'calc(100vh - 70px)' }} // Adjust based on header height
       >
         {/* Display lyrics and chords for all users */}
-        <LyricsDisplay artist={show.song.artist} title={show.song.title} />
+        <LyricsDisplay 
+          artist={show.song.artist} 
+          title={show.song.title} 
+          />
       </div>
       
       {/* Floating auto-scroll button */}

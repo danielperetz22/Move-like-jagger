@@ -1,111 +1,78 @@
+// LyricsDisplay.tsx
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../axiosinstance';
 import Chord from './Chord';
 
-interface LyricsDisplayProps {
+interface Props {
   artist: string;
   title: string;
 }
 
-// Define the response type
 interface LyricsResponse {
   lyrics: string;
-  source: string;
+  source?: string;
 }
 
-const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ artist, title }) => {
+const LyricsDisplay: React.FC<Props> = ({ artist, title }) => {
   const [lyrics, setLyrics] = useState<string>('');
-  const [chords, setChords] = useState<any[]>([]);
+  const [chords, setChords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLyrics = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Fetch lyrics on demand with proper typing
-        const response = await axiosInstance.get<LyricsResponse>(`/lyrics/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
-        
-        if (response.data && response.data.lyrics) {
-          setLyrics(response.data.lyrics);
-        } else {
-          setError('No lyrics available for this song');
-        }
-        
-        // Fetch chords (will now get fallback data from the backend if API fails)
-        try {
-            const chordsResponse = await axiosInstance.get<any[]>('/chords', {
-                params: { artist, title }
-            });
-          
-            setChords(chordsResponse.data);
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
 
-        } catch (chordsError) {
-          console.log('Chords not available for this song');
-          // Set empty chords array, but don't show error
-          setChords([]);
-        }
-        
+      try {
+        const lyricsResp = await axiosInstance.get<LyricsResponse>(
+          `/lyrics/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+        );
+        setLyrics(lyricsResp.data.lyrics || '');
+
+        const chordNames = await axiosInstance
+          .get<string[]>('/chords', { params: { chord: title } })
+          .then(r => r.data)
+          .catch(() => []);
+        setChords(chordNames);
       } catch (err) {
-        console.error('Error fetching lyrics:', err);
-        setError('Failed to load lyrics');
-        // Provide default message if lyrics API fails
-        setLyrics(`Playing: ${artist} - ${title}\n\n[Lyrics will appear here when available]`);
+        console.error('Error fetching data:', err);
+        setError('Failed to load content');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (artist && title) {
-      fetchLyrics();
-    }
+    fetchData();
   }, [artist, title]);
 
-  if (isLoading) {
-    return <div className="p-4 text-center">Loading lyrics...</div>;
-  }
-
-  // Function to render lyrics with line breaks
-  const renderLyrics = () => {
-    return lyrics.split('\n').map((line, index) => (
-      <p key={index} className={line.trim() === '' ? 'h-4' : 'my-1 text-lg leading-relaxed'}>
-        {line || '\u00A0'}
-      </p>
-    ));
-  };
+  if (isLoading) return <div className="p-4 text-center">Loading lyrics and chords...</div>;
 
   return (
     <div className="bg-gray-800 text-white rounded-lg shadow-md p-6">
       <h3 className="text-2xl font-semibold mb-4 text-blue-300">{artist} - {title}</h3>
-      
+
       {chords.length > 0 && (
         <div className="mb-6 p-4 bg-gray-700 rounded-lg">
           <h4 className="text-sm font-medium mb-3 text-gray-300">Chord Progression:</h4>
           <div className="flex flex-wrap gap-2">
-            {chords.map((chord, index) => (
-              <Chord key={index} chordSymbol={chord.name} />
+            {chords.map((name, idx) => (
+              <Chord key={idx} chordSymbol={name} />
             ))}
           </div>
           <p className="mt-3 text-xs text-gray-400">
-            Tip: Play these chords in sequence following the song's rhythm
+            Play these chords following the song's rhythm
           </p>
         </div>
       )}
-      
+
       {error ? (
         <div className="p-4 text-yellow-300">{error}</div>
       ) : (
-        <div className="whitespace-pre-line font-medium">
-          {renderLyrics()}
+        <div className="whitespace-pre-line text-lg leading-relaxed">
+          {lyrics || '\u00A0'}
         </div>
       )}
-      
-      <div className="mt-6 text-xs text-gray-400">
-        <p>Note: For complete and accurate lyrics, please refer to official licensed sources.</p>
-        <p>This application is for educational purposes only.</p>
-      </div>
     </div>
   );
 };

@@ -8,7 +8,8 @@
     "start": "ts-node src/server.ts",
     "build": "tsc",
     "test": "tsc && jest --runInBand",
-"test group": "tsc && jest --runInBand src/tests/group.test.ts"  },
+    "test group": "tsc && jest --runInBand src/tests/group.test.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -23,6 +24,7 @@
     "@types/nock": "^10.0.3",
     "axios": "^1.9.0",
     "bcrypt": "^6.0.0",
+    "cheerio": "^1.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
