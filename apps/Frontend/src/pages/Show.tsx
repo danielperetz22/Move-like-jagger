@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authcontext';
 import axiosInstance from '../axiosinstance';
@@ -42,175 +42,158 @@ interface UserResponse {
   admin: boolean;
 }
 
-const ShowPage: React.FC = () => {
-  const { showId } = useParams<{ showId: string }>();
-  const { userId } = useAuth();
+const Show: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const contentRef = useRef<HTMLDivElement>(null);
+  
   const [show, setShow] = useState<ShowDetails | null>(null);
-  const [userInstrument, setUserInstrument] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+  const [scrollIntervalId, setScrollIntervalId] = useState<number | null>(null);
+  
   useEffect(() => {
+    if (!isAuthenticated || !id) {
+      navigate('/login');
+      return;
+    }
+    
     const fetchData = async () => {
       try {
         setIsLoading(true);
         
-        // Get user details to determine instrument and admin status
+        // Get current user info
         const userResponse = await axiosInstance.get<UserResponse>('/auth/me');
-        setUserInstrument(userResponse.data.instrument);
         setIsAdmin(userResponse.data.admin);
         
         // Get show details
-        const showResponse = await axiosInstance.get<ShowDetails>(`/shows/${showId}`);
+        const showResponse = await axiosInstance.get<ShowDetails>(`/shows/${id}`);
         setShow(showResponse.data);
-      } catch (err: any) {
+        
+      } catch (err) {
         console.error('Error fetching show details:', err);
-        setError(err.response?.data?.message || 'Failed to load show details');
+        setError('Failed to load session');
       } finally {
         setIsLoading(false);
       }
     };
-
-    if (showId) {
-      fetchData();
+    
+    fetchData();
+    
+    // Cleanup interval on unmount
+    return () => {
+      if (scrollIntervalId) {
+        window.clearInterval(scrollIntervalId);
+      }
+    };
+  }, [id, isAuthenticated, navigate]);
+  
+  // Toggle auto-scrolling
+  const toggleAutoScroll = () => {
+    if (isAutoScrolling && scrollIntervalId) {
+      window.clearInterval(scrollIntervalId);
+      setScrollIntervalId(null);
+      setIsAutoScrolling(false);
+    } else {
+      const intervalId = window.setInterval(() => {
+        if (contentRef.current) {
+          contentRef.current.scrollBy({ 
+            top: 1, 
+            behavior: 'smooth' 
+          });
+        }
+      }, 100); // Adjust speed as needed
+      
+      setScrollIntervalId(intervalId);
+      setIsAutoScrolling(true);
     }
-  }, [showId, userId]);
-
-  const endShow = async () => {
-    if (!show) return;
+  };
+  
+  // End the session (admin only)
+  const endSession = async () => {
+    if (!show || !isAdmin) return;
     
     try {
       setIsLoading(true);
       await axiosInstance.put(`/shows/${show._id}`, { status: 'completed' });
-      navigate('/music');
+      navigate('/dashboard');
     } catch (err) {
-      console.error('Error ending show:', err);
-      setError('Failed to end the session');
+      console.error('Error ending session:', err);
+      setError('Failed to end session');
       setIsLoading(false);
     }
   };
-
+  
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
-
-  if (error) {
+  
+  if (error || !show) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-          <p>{error}</p>
+      <div className="container mx-auto px-4 py-8 text-center">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+          <p>{error || 'Session not found'}</p>
         </div>
-        <Button 
-          variant="secondary"
-          onClick={() => navigate('/music')}
-          className="mt-4"
-        >
-          Back to Music
+        <Button variant="secondary" onClick={() => navigate('/dashboard')}>
+          Back to Dashboard
         </Button>
       </div>
     );
   }
-
-  if (!show) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">
-          <p>Session not found</p>
-        </div>
-        <Button 
-          variant="secondary"
-          onClick={() => navigate('/music')}
-          className="mt-4"
-        >
-          Back to Music
-        </Button>
-      </div>
-    );
-  }
-
-  const isVocalist = userInstrument?.toLowerCase() === 'vocals';
-  const isCreator = show.createdBy._id === userId;
-
+  
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[#516578]">{show.name}</h1>
-          <p className="text-lg text-gray-600">
-            {show.song.artist} - {show.song.title}
-          </p>
+    <div className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <div className="bg-gray-900 p-4 sticky top-0 z-10">
+        <div className="container mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {show.song.artist} - {show.song.title}
+            </h1>
+          </div>
+          
+          {isAdmin && (
+            <Button variant="danger" onClick={endSession}>
+              Quit
+            </Button>
+          )}
         </div>
-        
-        {isAdmin && isCreator && show.status === 'active' && (
-          <Button 
-            variant="secondary"
-            onClick={endShow}
-          >
-            End Session
-          </Button>
-        )}
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content - lyrics and chords */}
-        <div className="lg:col-span-2">
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4 text-[#516578]">
-              {isVocalist ? 'Lyrics' : 'Lyrics & Chords'}
-            </h2>
-            
-            {/* Display lyrics */}
-            <div className="mb-6">
-              {show && show.song && (
-                <LyricsDisplay 
-                  artist={show.song.artist} 
-                  title={show.song.title} 
-                />
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Sidebar - participants */}
-        <div className="lg:col-span-1">
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4 text-[#516578]">Participants</h2>
-            
-            <div className="space-y-3">
-              {show.participants
-                .filter(p => p.status === 'accepted')
-                .map(participant => (
-                  <div 
-                    key={participant.userId._id} 
-                    className="flex items-center p-2 border-b last:border-b-0"
-                  >
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-blue-800 font-semibold">
-                        {participant.userId.username.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{participant.userId.username}</p>
-                      <p className="text-sm text-gray-600">{participant.userId.instrument}</p>
-                    </div>
-                  </div>
-                ))}
-              
-              {show.participants.filter(p => p.status === 'accepted').length === 0 && (
-                <p className="text-gray-500">No participants have joined yet.</p>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Content */}
+      <div 
+        ref={contentRef}
+        className="container mx-auto px-4 py-8 overflow-y-auto"
+        style={{ height: 'calc(100vh - 70px)' }} // Adjust based on header height
+      >
+        {/* Display lyrics and chords for all users */}
+        <LyricsDisplay artist={show.song.artist} title={show.song.title} />
+      </div>
+      
+      {/* Floating auto-scroll button */}
+      <div className="fixed bottom-6 right-6">
+        <button
+          onClick={toggleAutoScroll}
+          className={`rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition-colors ${
+            isAutoScrolling ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+          }`}
+        >
+          {isAutoScrolling ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          )}
+        </button>
       </div>
     </div>
   );
 };
 
-export default ShowPage;
+export default Show;

@@ -1,56 +1,77 @@
 import { Request, Response } from 'express';
-import showModel, { IShow } from '../models/show';
-import groupModel from '../models/group';
+import showModel from '../models/show';
 import userModel from '../models/auth';
 import songModel from '../models/song';
 
 export class ShowController {
   // Create a show (admin only)
-  async create(req: Request, res: Response) {
-    const userId = req.user?._id;
-    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-    
-    const adminUser = await userModel.findById(userId);
-    if (!adminUser?.admin) {
-      return res.status(403).json({ message: 'Only admins can create shows' });
+  create = async (req: Request, res: Response): Promise<Response | void> => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+      
+      const { name, songId } = req.body;
+      
+      if (!songId) {
+        return res.status(400).json({ message: 'Song ID is required' });
+      }
+      
+      // Get the song to make sure it exists
+      const song = await songModel.findById(songId);
+      if (!song) {
+        return res.status(404).json({ message: 'Song not found' });
+      }
+      
+      // Create show without requiring a group
+      const show = new showModel({
+        name: name || `${song.artist} - ${song.title}`,
+        createdBy: userId,
+        // Remove groupId requirement
+        song: {
+          _id: song._id,
+          title: song.title,
+          artist: song.artist,
+          lyrics: song.rawLyrics,
+          chords: song.chords || []
+        },
+        participants: [], // Empty participants since we don't use groups
+        status: 'created'
+      });
+      
+      await show.save();
+      res.status(201).json(show);
+    } catch (error) {
+      console.error('Error creating show:', error);
+      res.status(500).json({ message: 'Failed to create show' });
     }
+  };
 
-    const { name, groupId, songId } = req.body;
-    
-    // Check if group exists
-    const group = await groupModel.findById(groupId).populate('members');
-    if (!group) {
-      return res.status(404).json({ message: 'Group not found' });
+  // Get active shows
+  getActive = async (req: Request, res: Response): Promise<Response | void> => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+      
+      // Find active shows created by admins
+      const activeShow = await showModel.findOne({ 
+        status: 'active'
+      })
+      .populate('createdBy', 'username')
+      .sort({ createdAt: -1 });
+      
+      if (!activeShow) {
+        return res.status(404).json({ message: 'No active shows found' });
+      }
+      
+      res.json(activeShow);
+    } catch (error) {
+      console.error('Error getting active shows:', error);
+      res.status(500).json({ message: 'Failed to get active shows' });
     }
-    
-    // Get the song from database
-    const song = await songModel.findById(songId);
-    if (!song) {
-      return res.status(404).json({ message: 'Song not found' });
-    }
-    
-    const show = await showModel.create({
-      name,
-      createdBy: userId,
-      groupId,
-      song: {
-        _id: song._id,
-        title: song.title,
-        artist: song.artist,
-        lyrics: song.rawLyrics,
-        chords: song.chords
-      },
-      participants: (group.members as any[]).map(member => ({
-        userId: member._id,
-        status: 'pending'
-      }))
-    });
-    
-    res.status(201).json(show);
-  }
-  
+  };
+
   // Get shows for a user
-  async getForUser(req: Request, res: Response) {
+  getForUser = async (req: Request, res: Response): Promise<Response | void> => {
     const userId = req.user?._id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
     
@@ -61,14 +82,13 @@ export class ShowController {
       ]
     })
     .populate('createdBy', 'username')
-    .populate('groupId', 'name')
     .populate('participants.userId', 'username instrument');
     
     res.json(shows);
-  }
-  
+  };
+
   // Update show participation status
-  async updateParticipation(req: Request, res: Response) {
+  updateParticipation = async (req: Request, res: Response): Promise<Response | void> => {
     const userId = req.user?._id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
     
@@ -90,17 +110,16 @@ export class ShowController {
     }
     
     res.json(show);
-  }
-  
+  };
+
   // Get show details
-  async getOne(req: Request, res: Response) {
+  getOne = async (req: Request, res: Response): Promise<Response | void> => {
     const userId = req.user?._id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
     
     const showId = req.params.id;
     const show = await showModel.findById(showId)
       .populate('createdBy', 'username')
-      .populate('groupId', 'name')
       .populate('participants.userId', 'username instrument');
     
     if (!show) {
@@ -118,10 +137,10 @@ export class ShowController {
     }
     
     res.json(show);
-  }
-  
+  };
+
   // Update show status (start or end)
-  async updateStatus(req: Request, res: Response) {
+  updateStatus = async (req: Request, res: Response): Promise<Response | void> => {
     const userId = req.user?._id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
     
@@ -152,5 +171,5 @@ export class ShowController {
     await show.save();
     
     res.json(show);
-  }
+  };
 }

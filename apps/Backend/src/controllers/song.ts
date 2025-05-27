@@ -158,3 +158,28 @@ export const searchAndSaveSong = async (
     // ...existing error handling code...
   }
 };
+
+// Add this function to your existing song controller
+
+export const searchSongs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { query } = req.query as { query: string };
+    
+    if (!query) {
+      res.status(400).json({ message: 'Search query is required' });
+      return;
+    }
+    
+    const songs = await Song.find({
+      admin: req.user!._id,
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { artist: { $regex: query, $options: 'i' } }
+      ]
+    });
+    
+    res.json(songs);
+  } catch (err) {
+    next(err);
+  }
+};

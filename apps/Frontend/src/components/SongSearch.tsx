@@ -3,8 +3,11 @@ import axiosInstance from '../axiosinstance';
 import Button from './ui/Button';
 
 interface SongSearchProps {
-  onSongAdded: () => void;
+  onSongAdded: (showId: string) => void; // Called when a show is created with the song
 }
+
+// add minimal response shape
+interface IdResponse { _id: string; }
 
 const SongSearch: React.FC<SongSearchProps> = ({ onSongAdded }) => {
   const [artist, setArtist] = useState('');
@@ -26,28 +29,60 @@ const SongSearch: React.FC<SongSearchProps> = ({ onSongAdded }) => {
       setError(null);
       setSuccess(null);
       
-      console.log('Sending song data:', { artist: artist.trim(), title: title.trim() });
-      
-      const response = await axiosInstance.post('/songs', {
+      // Step 1: Create/find the song in the database
+      const songResponse = await axiosInstance.post<IdResponse>('/songs', {
         artist: artist.trim(),
         title: title.trim()
       });
       
-      console.log('Song creation response:', response.data);
+      console.log('Song created/found:', songResponse.data);
       
-      setSuccess(`Successfully added "${artist} - ${title}" to your songs!`);
-      setArtist('');
-      setTitle('');
-      onSongAdded();
+      if (!songResponse.data || !songResponse.data._id) {
+        throw new Error('Failed to create song');
+      }
+      
+      const songId = songResponse.data._id;
+      
+      try {
+        // Step 2: Create a show with this song
+        console.log('Creating show with song ID:', songId);
+        const showResponse = await axiosInstance.post<IdResponse>('/shows', {
+          name: `${artist} - ${title}`,
+          songId
+        });
+        
+        console.log('Show created:', showResponse.data);
+        
+        if (!showResponse.data || !showResponse.data._id) {
+          throw new Error('Failed to create show');
+        }
+        
+        const showId = showResponse.data._id;
+        
+        // Step 3: Activate the show
+        console.log('Activating show:', showId);
+        await axiosInstance.put<IdResponse>(`/shows/${showId}`, { 
+          status: 'active' 
+        });
+        
+        setSuccess(`Song found! Redirecting to live view...`);
+        
+        setArtist('');
+        setTitle('');
+        
+        setTimeout(() => {
+          onSongAdded(showId);
+        }, 1000);
+      } catch (showErr) {
+        console.error('Error creating or activating show:', showErr);
+        setError('Found the song but failed to create a session. Please try again.');
+      }
     } catch (err: any) {
-      console.error('Error searching for song:', err);
+      console.error('Error searching/creating song:', err);
       
-      // Try to get the most useful error message
+      // Get error message
       let errorMessage = 'Failed to find or save the song';
-      
-      if (err.response?.data?.validationError) {
-        errorMessage = `Validation error: ${err.response.data.message}`;
-      } else if (err.response?.data?.message) {
+      if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
@@ -61,7 +96,7 @@ const SongSearch: React.FC<SongSearchProps> = ({ onSongAdded }) => {
 
   return (
     <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-      <h2 className="text-2xl font-semibold mb-4 text-[#516578]">Add New Song</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-[#516578]">Search any song...</h2>
       
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
@@ -107,7 +142,7 @@ const SongSearch: React.FC<SongSearchProps> = ({ onSongAdded }) => {
           variant="primary"
           disabled={isLoading || !artist || !title}
         >
-          {isLoading ? 'Searching...' : 'Search & Add Song'}
+          {isLoading ? 'Searching...' : 'Start Live Session'}
         </Button>
       </form>
     </div>

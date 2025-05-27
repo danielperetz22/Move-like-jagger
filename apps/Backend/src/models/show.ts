@@ -4,7 +4,7 @@ import { IUser } from './auth';
 export interface IShow extends Document {
   name: string;
   createdBy: Types.ObjectId;
-  groupId: Types.ObjectId;
+  groupId?: Types.ObjectId; // Make groupId optional
   song: {
     _id: string;
     title: string;
@@ -18,18 +18,19 @@ export interface IShow extends Document {
   }[];
   status: 'created' | 'active' | 'completed';
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const ShowSchema: Schema = new Schema({
   name: { type: String, required: true },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  groupId: { type: Schema.Types.ObjectId, ref: 'Group', required: true },
+  groupId: { type: Schema.Types.ObjectId, ref: 'Group' }, // Make optional
   song: {
-    _id: { type: String },
-    title: { type: String },
-    artist: { type: String },
-    lyrics: { type: String },
-    chords: [{ type: Schema.Types.Mixed }]
+    _id: { type: String, required: true },
+    title: { type: String, required: true },
+    artist: { type: String, required: true },
+    lyrics: { type: String, default: '' },
+    chords: { type: Array, default: [] }
   },
   participants: [{
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
