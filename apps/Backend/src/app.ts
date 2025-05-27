@@ -10,6 +10,7 @@ import songRoutes from './routes/song';
 import lyricsRoutes from './routes/lyrics';
 import chordsRoutes from './routes/chords';
 import groupRoutes from './routes/group';
+import showRoutes from './routes/show';
 
 const app = express();
 
@@ -30,7 +31,7 @@ app.use('/api/songs', songRoutes);
 app.use('/api/lyrics', lyricsRoutes);
 app.use('/api/chords', chordsRoutes);
 app.use('/api/groups', groupRoutes);
-
+app.use('/api/shows', showRoutes);  
 
 // 404 handler
 app.use((req: Request, res: Response) => {

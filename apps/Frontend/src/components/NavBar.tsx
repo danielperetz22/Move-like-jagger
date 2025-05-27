@@ -33,6 +33,9 @@ const NavBar: React.FC = () => {
             <Button variant="primary" onClick={() => navigate('/dashboard')}>
               Dashboard
             </Button>
+            <Button variant="secondary" onClick={() => navigate('/music')}>
+              Music
+            </Button>
             <Button variant="secondary" onClick={handleLogout}>
               Logout
             </Button>

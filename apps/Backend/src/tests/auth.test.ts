@@ -35,6 +35,84 @@ afterAll(async () => {
   nock.restore();
 });
 
+describe('Auth Endpoints', () => {
+  // Add tests for new functionality
+  describe('User Profile and Search', () => {
+    it('GET /api/auth/me → returns current user details', async () => {
+      const res = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${accessToken}`);
+      
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        _id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        instrument: 'guitar',
+        admin: expect.any(Boolean)
+      });
+    });
+
+    it('GET /api/auth/me → rejects unauthenticated access', async () => {
+      const res = await request(app).get('/api/auth/me');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/auth/search → finds users by username', async () => {
+      // Register another test user
+      await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: 'searchtest@example.com',
+          password: 'password123',
+          username: 'searchuser',
+          instrument: 'piano'
+        });
+      
+      const res = await request(app)
+        .get('/api/auth/search?query=search')
+        .set('Authorization', `Bearer ${accessToken}`);
+      
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body[0]).toMatchObject({
+        username: 'searchuser',
+        email: 'searchtest@example.com'
+      });
+    });
+
+    it('GET /api/auth/search → finds users by email', async () => {
+      const res = await request(app)
+        .get('/api/auth/search?query=searchtest')
+        .set('Authorization', `Bearer ${accessToken}`);
+      
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body[0]).toMatchObject({
+        username: 'searchuser',
+        email: 'searchtest@example.com'
+      });
+    });
+
+    it('GET /api/auth/search → requires authentication', async () => {
+      const res = await request(app)
+        .get('/api/auth/search?query=test');
+      
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/auth/search → requires query parameter', async () => {
+      const res = await request(app)
+        .get('/api/auth/search')
+        .set('Authorization', `Bearer ${accessToken}`);
+      
+      expect(res.status).toBe(400);
+    });
+  });
+});
+
 describe('Protected Song CRUD', () => {
   it('rejects unauthenticated access to GET /api/songs', async () => {
     const res = await request(app).get('/api/songs');

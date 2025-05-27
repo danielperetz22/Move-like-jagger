@@ -1,6 +1,6 @@
 import React from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'outline2' | 'ghost' | 'danger' | 'pink';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'outline2' | 'ghost' | 'danger' | 'underlined';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -29,10 +29,8 @@ const Button: React.FC<ButtonProps> = ({
     outline2:
       ' bg-white text-black text-md py-2 px-4 rounded border border-gray-300 ' +
       'hover:bg-[#f8f8f8] flex items-center justify-center gap-2',
-    pink:
-      'inline-block bg-[#EFB6BF] text-md text-white font-orienta font-semibold ' +
-      'px-1.5 py-1 border border-[#EFB6BF] rounded-full ' +
-      'hover:bg-[#DFA4AD] transition-colors',
+    underlined:
+      'inline-block text-md text-[#6F9FF9] font-orienta font-semibold ' ,
     ghost:
       'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-300',
     danger:
