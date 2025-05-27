@@ -4,7 +4,12 @@ import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import authRoutses from './routes/auth';
+import songRoutes from './routes/song';
+import lyricsRoutes from './routes/lyrics';
+import chordsRoutes from './routes/chords';
+
 const app = express();
 
 // Security headers
@@ -16,9 +21,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // HTTP request logger
 app.use(morgan('dev'));
-
+// Cookie parser for handling cookies
+app.use(cookieParser());
 // API endpoints
 app.use('/api/auth', authRoutses);
+app.use('/api/songs', songRoutes);
+app.use('/api/lyrics', lyricsRoutes);
+app.use('/api/chords', chordsRoutes);
+
 
 // 404 handler
 app.use((req: Request, res: Response) => {

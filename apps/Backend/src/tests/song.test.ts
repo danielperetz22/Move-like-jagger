@@ -9,11 +9,11 @@ let accessToken: string;
 let userId: string;
 
 beforeAll(async () => {
-  // Start in-memory MongoDB
+  // 1) Start in‐memory MongoDB
   mongo = await MongoMemoryServer.create();
   await mongoose.connect(mongo.getUri());
 
-  // Register a user and grab their accessToken
+  // 2) Register a user and grab their accessToken
   const userData = {
     email: 'test@example.com',
     password: 'password123',
@@ -31,8 +31,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await mongoose.disconnect();
   await mongo.stop();
-  nock.cleanAll();
-  nock.restore();
 });
 
 describe('Protected Song CRUD', () => {
@@ -116,23 +114,23 @@ describe('Protected Song CRUD', () => {
     nock('https://api.lyrics.ovh')
       .get('/v1/Coldplay/Yellow')
       .reply(200, { lyrics: 'Look at the stars...' });
-
+  
     nock('https://chords.alday.dev')
       .get('/chords')
-      .query({ 'note[]': ['C', 'G'] })  
-        .reply(200, [
+      .query({ 'note[]': ['C','G'] }) 
+      .reply(200, [
         { id: 'c_major', name: 'C Major', notes: ['C','E','G'], intervals: ['P1','M3','P5'], midiKeys: [60,64,67] },
         { id: 'g_major', name: 'G Major', notes: ['G','B','D'], intervals: ['P1','M3','P5'], midiKeys: [67,71,74] }
       ]);
-
+  
     const res = await request(app)
       .get('/api/songs/search/Coldplay/Yellow?chords=C,G')
       .set('Authorization', `Bearer ${accessToken}`);
-
+  
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
-      artist:    'Coldplay',
-      title:     'Yellow',
+      artist: 'Coldplay',
+      title: 'Yellow',
       rawLyrics: 'Look at the stars...',
       chords: expect.arrayContaining([
         expect.objectContaining({ id: 'c_major' }),

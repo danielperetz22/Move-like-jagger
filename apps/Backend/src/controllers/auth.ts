@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import jwt, { Secret, SignOptions, JwtPayload } from 'jsonwebtoken';
 import { BaseController } from './base';
 import userModel, { IUser } from '../models/auth';
+import cookieParser from 'cookie-parser';
 
 declare global {
     namespace Express {
@@ -31,7 +32,11 @@ function generateTokens(userId: string): Tokens {
   
     return { accessToken, refreshToken };
   }
-
+  function extractRefreshToken(req: Request): string | undefined {
+      if (req.cookies?.refreshToken)   return req.cookies.refreshToken;
+      if (req.header('x-refresh-token')) return req.header('x-refresh-token')!;
+      return req.body?.refreshToken;
+    }
 async function validateRefreshToken(token?: string): Promise<IUser> {
     if (!token) throw new Error('No refresh token provided');
     const payload = jwt.verify(token, REFRESH_TOKEN_SECRET) as JwtPayload;
@@ -138,11 +143,11 @@ async create(req: Request, res: Response): Promise<void> {
   // refresh
   async refresh(req: Request, res: Response): Promise<void> {
     try {
-      const { refreshToken } = req.body;
-      const user = await validateRefreshToken(refreshToken);
+        const token = extractRefreshToken(req)!;
+        const user  = await validateRefreshToken(token);
 
       const tokens = generateTokens(user._id.toString());
-      user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
+      user.refreshTokens = user.refreshTokens.filter(t => t !== token);
       user.refreshTokens.push(tokens.refreshToken);
       await user.save();
 
@@ -156,16 +161,16 @@ async create(req: Request, res: Response): Promise<void> {
   // logout
   async logout(req: Request, res: Response): Promise<void> {
     try {
-      const { refreshToken } = req.body;
-      const user = await validateRefreshToken(refreshToken);
+        const token = extractRefreshToken(req)!;
+        const user  = await validateRefreshToken(token);
 
-      user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
-      await user.save();
+        user.refreshTokens = user.refreshTokens.filter(t => t !== token);
+        await user.save();
 
-      res.status(200).json({ message: 'Logged out successfully' });
-    } catch (err: any) {
-      console.error(err);
-      res.status(400).json({ message: err.message });
+        res.status(200).json({ message: 'Logged out successfully' });
+    }   catch (err: any) {
+        console.error(err);
+        res.status(400).json({ message: err.message });
     }
   }
 
