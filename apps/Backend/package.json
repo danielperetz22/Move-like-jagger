@@ -6,8 +6,8 @@
   "scripts": {
     "start": "ts-node src/server.ts",
     "build": "tsc",
-    "test": "jest --runInBand"
-  },
+    "test": "tsc && jest --runInBand",
+"test group": "tsc && jest --runInBand src/tests/group.test.ts"  },
   "keywords": [],
   "author": "",
   "license": "ISC",

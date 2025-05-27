@@ -9,6 +9,7 @@ import authRoutses from './routes/auth';
 import songRoutes from './routes/song';
 import lyricsRoutes from './routes/lyrics';
 import chordsRoutes from './routes/chords';
+import groupRoutes from './routes/group';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutses);
 app.use('/api/songs', songRoutes);
 app.use('/api/lyrics', lyricsRoutes);
 app.use('/api/chords', chordsRoutes);
+app.use('/api/groups', groupRoutes);
 
 
 // 404 handler
