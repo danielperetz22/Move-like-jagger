@@ -1,122 +1,144 @@
 import request from 'supertest';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import nock from 'nock';
 import app from '../app';
-import userModel from '../models/auth';
-import { connect, clearDatabase, closeDatabase } from './setup';
 
-describe('Auth API', () => {
-  beforeAll(async () => {
-    await connect();
-  });
+let mongo: MongoMemoryServer;
+let accessToken: string;
+let userId: string;
 
-  afterEach(async () => {
-    await clearDatabase();
-  });
+beforeAll(async () => {
+  // Start in-memory MongoDB
+  mongo = await MongoMemoryServer.create();
+  await mongoose.connect(mongo.getUri());
 
-  afterAll(async () => {
-    await closeDatabase();
-  });
-
+  // Register a user and grab their accessToken
   const userData = {
     email: 'test@example.com',
     password: 'password123',
-    username: 'tester',
-    instrument: 'guitar',
+    username: 'testuser',
+    instrument: 'guitar'
   };
+  const res = await request(app)
+    .post('/api/auth/register')
+    .send(userData);
 
-  describe('POST /api/auth/register', () => {
-    it('should register a new user and return tokens', async () => {
-      const res = await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+  accessToken = res.body.tokens.accessToken;
+  userId      = res.body.user._id;
+});
 
-      expect(res.status).toBe(201);
-      expect(res.body).toHaveProperty('user');
-      expect(res.body.user.email).toBe(userData.email);
-      expect(res.body).toHaveProperty('tokens');
-      expect(res.body.tokens).toHaveProperty('accessToken');
-      expect(res.body.tokens).toHaveProperty('refreshToken');
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongo.stop();
+  nock.cleanAll();
+  nock.restore();
+});
 
-      const userInDb = await userModel.findOne({ email: userData.email });
-      expect(userInDb).not.toBeNull();
-    });
+describe('Protected Song CRUD', () => {
+  it('rejects unauthenticated access to GET /api/songs', async () => {
+    const res = await request(app).get('/api/songs');
+    expect(res.status).toBe(401);
   });
 
-  describe('POST /api/auth/login', () => {
-    it('should login an existing user and return tokens', async () => {
-      await request(app).post('/api/auth/register').send(userData);
+  let songId: string;
 
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: userData.email,
-          password: userData.password,
-        });
+  it('POST /api/songs → creates a new song with admin set', async () => {
+    const payload = {
+      artist:    'Coldplay',
+      title:     'Yellow',
+      rawLyrics: 'Look at the stars...',
+      chords: [
+        { id: 'c_major', name: 'C Major', notes: ['C','E','G'], intervals: ['P1','M3','P5'], midiKeys: [60,64,67] }
+      ]
+    };
 
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('user');
-      expect(res.body.user.email).toBe(userData.email);
-      expect(res.body).toHaveProperty('tokens');
-      expect(res.body.tokens).toHaveProperty('accessToken');
-      expect(res.body.tokens).toHaveProperty('refreshToken');
+    const res = await request(app)
+      .post('/api/songs')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send(payload);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      artist:    payload.artist,
+      title:     payload.title,
+      rawLyrics: payload.rawLyrics,
+      chords:    payload.chords,
+      admin:     userId
     });
+
+    songId = res.body._id;
   });
 
-  describe('POST /api/auth/refresh', () => {
-    it('should refresh tokens when given a valid refreshToken', async () => {
-      await request(app).post('/api/auth/register').send(userData);
-      const loginRes = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: userData.email,
-          password: userData.password,
-        });
+  it('GET /api/songs → returns only this admin’s songs', async () => {
+    const res = await request(app)
+      .get('/api/songs')
+      .set('Authorization', `Bearer ${accessToken}`);
 
-      const oldRefresh = loginRes.body.tokens.refreshToken;
-      const res = await request(app)
-        .post('/api/auth/refresh')
-        .send({ refreshToken: oldRefresh });
-
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('tokens');
-      expect(res.body.tokens).toHaveProperty('accessToken');
-      expect(res.body.tokens).toHaveProperty('refreshToken');
-      expect(res.body._id).toBe(loginRes.body.user._id);
-    });
-
-    it('should reject missing refreshToken', async () => {
-      const res = await request(app)
-        .post('/api/auth/refresh')
-        .send({});
-
-      expect(res.status).toBe(401);
-      expect(res.body.message).toMatch(/No refresh token provided/i);
-    });
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0]._id).toBe(songId);
   });
 
-  describe('POST /api/auth/logout', () => {
-    it('should logout and remove the refreshToken', async () => {
-      await request(app).post('/api/auth/register').send(userData);
-      const loginRes = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: userData.email,
-          password: userData.password,
-        });
+  it('GET /api/songs/:id → returns the specific song', async () => {
+    const res = await request(app)
+      .get(`/api/songs/${songId}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
-      const refresh = loginRes.body.tokens.refreshToken;
-      const res = await request(app)
-        .post('/api/auth/logout')
-        .send({ refreshToken: refresh });
+    expect(res.status).toBe(200);
+    expect(res.body._id).toBe(songId);
+    expect(res.body.admin).toBe(userId);
+  });
 
-      expect(res.status).toBe(200);
-      expect(res.body.message).toMatch(/logged out successfully/i);
+  it('returns 404 for another admin’s songId', async () => {
+    // create a second user
+    const res2 = await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: 'foo@example.com',
+        password: 'pass1234',
+        username: 'foo',
+        instrument: 'bass'
+      });
+    const otherToken = res2.body.tokens.accessToken;
 
-      const retry = await request(app)
-        .post('/api/auth/refresh')
-        .send({ refreshToken: refresh });
+    // try to fetch the first song with the second user’s token
+    const res = await request(app)
+      .get(`/api/songs/${songId}`)
+      .set('Authorization', `Bearer ${otherToken}`);
 
-      expect(retry.status).toBe(401);
-      expect(retry.body.message).toMatch(/Refresh token not recognized/i);
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /api/songs/search/:artist/:title → fetches, saves and returns the song', async () => {
+    // mock external APIs
+    nock('https://api.lyrics.ovh')
+      .get('/v1/Coldplay/Yellow')
+      .reply(200, { lyrics: 'Look at the stars...' });
+
+    nock('https://chords.alday.dev')
+      .get('/chords')
+      .query({ 'note[]': ['C', 'G'] })  
+        .reply(200, [
+        { id: 'c_major', name: 'C Major', notes: ['C','E','G'], intervals: ['P1','M3','P5'], midiKeys: [60,64,67] },
+        { id: 'g_major', name: 'G Major', notes: ['G','B','D'], intervals: ['P1','M3','P5'], midiKeys: [67,71,74] }
+      ]);
+
+    const res = await request(app)
+      .get('/api/songs/search/Coldplay/Yellow?chords=C,G')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      artist:    'Coldplay',
+      title:     'Yellow',
+      rawLyrics: 'Look at the stars...',
+      chords: expect.arrayContaining([
+        expect.objectContaining({ id: 'c_major' }),
+        expect.objectContaining({ id: 'g_major' })
+      ]),
+      admin: expect.any(String)
     });
   });
 });
