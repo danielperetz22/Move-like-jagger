@@ -15,10 +15,17 @@ const SongSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  artist:    { type: String, required: true },
-  title:     { type: String, required: true },
-  rawLyrics: { type: String, required: true },    
-  chords:    { type: [ChordDefinitionSchema], default: [] },
+  artist:    { type: String, required: true, trim: true },
+  title:     { type: String, required: true, trim: true },
+  rawLyrics: { 
+    type: String, 
+    required: true,
+    default: 'Lyrics not available' 
+  },    
+  chords:    { 
+    type: [ChordDefinitionSchema], 
+    default: [] 
+  },
 }, {
   timestamps: true
 });

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -33,15 +33,30 @@ app.use('/api/chords', chordsRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/shows', showRoutes);  
 
+
 // 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({ message: 'Not Found' });
 });
 
-// Global error handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+// Global error handler - use ErrorRequestHandler type
+app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
   console.error('🔥 Server error:', err);
-  res.status(500).json({ message: 'Internal Server Error' });
+  
+  // Return more detailed error information in development
+  if (process.env.NODE_ENV !== 'production') {
+    res.status(500).json({
+      message: err.message || 'Internal Server Error',
+      stack: err.stack,
+      error: err
+    });
+    return;
+  }
+  
+  // Send limited info in production
+  res.status(500).json({ 
+    message: err.message || 'Internal Server Error'
+  });
 });
 
 export default app;

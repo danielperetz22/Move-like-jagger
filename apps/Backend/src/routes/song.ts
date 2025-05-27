@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../controllers/auth';
-import { getAllSongs, getSongById, createSong ,searchAndSaveSong } from '../controllers/song';
+import { getAllSongs, getSongById, createSong, searchAndSaveSong } from '../controllers/song';
 
 const router = Router();
 
@@ -8,10 +8,9 @@ const router = Router();
 router.use(authMiddleware);
 
 // only admins can CRUD their songs
-router.get('/',    getAllSongs);
+router.get('/', getAllSongs);
 router.get('/:id', getSongById);
 router.get('/search/:artist/:title', searchAndSaveSong);
-router.post('/',   createSong);
-
+router.post('/', createSong);
 
 export default router;

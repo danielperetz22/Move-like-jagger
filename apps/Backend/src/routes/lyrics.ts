@@ -1,5 +1,8 @@
+import { Router } from 'express';
 import axios from 'axios';
-import router from './song';
+
+// Create a new router instance instead of reusing the song router
+const router = Router();
 
 interface LyricsResponse { lyrics: string; }
 

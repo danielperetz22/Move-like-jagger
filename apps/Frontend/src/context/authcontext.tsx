@@ -34,50 +34,106 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [refreshToken, setRefreshToken] = useState<string | null>(localStorage.getItem('refreshToken'));
   const [userId, setUserId] = useState<string | null>(localStorage.getItem('userId'));
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!localStorage.getItem('token'));
 
-  const isAuthenticated = Boolean(token);
-
-  const saveAuth = (accessToken: string, newRefreshToken: string, _id: string) => {
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('refreshToken', newRefreshToken);
-    localStorage.setItem('userId', _id);
-    setToken(accessToken);
-    setRefreshToken(newRefreshToken);
-    setUserId(_id);
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-  };
-
+  // Verify token on mount and refresh if needed
   useEffect(() => {
-    async function tryRefresh() {
-      if (!refreshToken) return;
-      try {
-        const resp = await axiosInstance.post<{
-          tokens: { accessToken: string; refreshToken: string };
-          _id: string;
-        }>('/auth/refresh', { refreshToken });
+    const verifyToken = async () => {
+      if (token) {
+        try {
+          // Set token in axios headers
+          axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          
+          // Verify the token by making a request to a protected endpoint
+          await axiosInstance.get('/auth/me');
+          
+          // Token is valid, keep user logged in
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Token verification failed', error);
+          
+          // Try to refresh the token if we have a refresh token
+          if (refreshToken) {
+            try {
+              const response = await axiosInstance.post('/auth/refresh-token', { refreshToken });
+              
+              // Update tokens in state and localStorage
+              const newToken = response.data.accessToken;
+              const newRefreshToken = response.data.refreshToken;
+              
+              localStorage.setItem('token', newToken);
+              localStorage.setItem('refreshToken', newRefreshToken);
+              
+              setToken(newToken);
+              setRefreshToken(newRefreshToken);
+              setIsAuthenticated(true);
+              
+              // Update axios headers with new token
+              axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+            } catch (refreshError) {
+              console.error('Token refresh failed', refreshError);
+              // Clear auth state if refresh token is invalid
+              handleLogout(false);
+            }
+          } else {
+            // No refresh token, so log out
+            handleLogout(false);
+          }
+        }
+      }
+    };
 
-        const { accessToken: newAccessToken, refreshToken: newRt } = resp.data.tokens;
-        saveAuth(newAccessToken, newRt, resp.data._id);
-      } catch {
-        localStorage.clear();
-        setToken(null);
-        setRefreshToken(null);
-        setUserId(null);
-        delete axiosInstance.defaults.headers.common['Authorization'];
+    verifyToken();
+  }, [token, refreshToken]);
+
+  // Function to handle logout cleanup
+  const handleLogout = async (makeRequest = true) => {
+    // Only make the logout request if specified (to avoid infinite loops)
+    if (makeRequest && token) {
+      try {
+        await axiosInstance.post('/auth/logout');
+      } catch (error) {
+        console.error('Logout request failed', error);
       }
     }
 
-    tryRefresh();
-  }, [refreshToken]);
+    // Clear state
+    setToken(null);
+    setRefreshToken(null);
+    setUserId(null);
+    setIsAuthenticated(false);
+    
+    // Clear localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    
+    // Clear axios headers
+    delete axiosInstance.defaults.headers.common['Authorization'];
+  };
 
   const login = async (email: string, password: string) => {
-    const resp = await axiosInstance.post<{
-      user: { _id: string };
-      tokens: { accessToken: string; refreshToken: string };
-    }>('/auth/login', { email, password });
-
-    const { accessToken: newAccessToken, refreshToken: newRt } = resp.data.tokens;
-    saveAuth(newAccessToken, newRt, resp.data.user._id);
+    try {
+      const response = await axiosInstance.post('/auth/login', { email, password });
+      
+      // Save tokens and user ID
+      const { accessToken, refreshToken, userId } = response.data;
+      
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userId', userId);
+      
+      setToken(accessToken);
+      setRefreshToken(refreshToken);
+      setUserId(userId);
+      setIsAuthenticated(true);
+      
+      // Set token in axios headers
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    } catch (error) {
+      console.error('Login failed', error);
+      throw error;
+    }
   };
 
   const register = async (data: {
@@ -88,53 +144,58 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     profileImage?: File;
     admin?: boolean;
   }) => {
-    const form = new FormData();
-    form.append('email', data.email);
-    form.append('password', data.password);
-    form.append('username', data.username);
-    form.append('instrument', data.instrument);
-    if (data.admin) form.append('admin', 'true');
-    if (data.profileImage) form.append('profileImage', data.profileImage);
-
-    const resp = await axiosInstance.post<{
-      user: { _id: string };
-      tokens: { accessToken: string; refreshToken: string };
-    }>('/auth/register', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-
-    const { accessToken: newAccessToken, refreshToken: newRt } = resp.data.tokens;
-    saveAuth(newAccessToken, newRt, resp.data.user._id);
-  };
-
-  const logout = async () => {
     try {
-      if (refreshToken) {
-        await axiosInstance.post('/auth/logout', { refreshToken });
+      // Create FormData if there's a profile image
+      let requestData;
+      
+      if (data.profileImage) {
+        const formData = new FormData();
+        formData.append('email', data.email);
+        formData.append('password', data.password);
+        formData.append('username', data.username);
+        formData.append('instrument', data.instrument);
+        formData.append('profileImage', data.profileImage);
+        if (data.admin !== undefined) {
+          formData.append('admin', String(data.admin));
+        }
+        requestData = formData;
+      } else {
+        requestData = data;
       }
-    } finally {
-      localStorage.clear();
-      setToken(null);
-      setRefreshToken(null);
-      setUserId(null);
-      delete axiosInstance.defaults.headers.common['Authorization'];
-      window.location.href = '/login';
+      
+      const response = await axiosInstance.post('/auth/register', requestData, {
+        headers: data.profileImage ? { 'Content-Type': 'multipart/form-data' } : undefined
+      });
+      
+      // Save tokens and user ID
+      const { accessToken, refreshToken, userId } = response.data;
+      
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userId', userId);
+      
+      setToken(accessToken);
+      setRefreshToken(refreshToken);
+      setUserId(userId);
+      setIsAuthenticated(true);
+      
+      // Set token in axios headers
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    } catch (error) {
+      console.error('Registration failed', error);
+      throw error;
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        token,
-        refreshToken,
-        userId,
-        isAuthenticated,
-        login,
-        register,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value: AuthContextType = {
+    token,
+    refreshToken,
+    userId,
+    isAuthenticated,
+    login,
+    register,
+    logout: () => handleLogout(true)
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
