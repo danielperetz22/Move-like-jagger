@@ -198,7 +198,7 @@ async create(req: Request, res: Response): Promise<void> {
 
 }
   
-  export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(' ')[1];
     if (!token) {
@@ -223,7 +223,7 @@ async create(req: Request, res: Response): Promise<void> {
       }
       next();
     });
-  };
+};
 
 export const searchUsers = async (req: Request, res: Response): Promise<void> => {
   const { query } = req.query as { query: string };

@@ -20,19 +20,16 @@ const app = express();
 app.use(helmet());
 const allowedOrigin = 'https://ja-moveo-enon.vercel.app';
 
-app.use(cors({
+const corsOptions = {
   origin: allowedOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
   credentials: true,
-}));
+};
 
-app.options('*', cors({
-  origin: allowedOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+app.use(cors(corsOptions));     // handles simple requests
+app.options('*', cors(corsOptions)); // handles preflight OPTIONS
+
 
 
 app.use(express.json());
