@@ -8,17 +8,17 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/(.)",
       "dest": "api/index.ts"
     }
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/(.)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://ja-moveo-enon.vercel.app"
+          "value": "https://ja-moveo-enon.vercel.app/"
         },
         {
           "key": "Access-Control-Allow-Methods",
