@@ -57,7 +57,6 @@ export class UserController extends BaseController<IUser> {
 async create(req: Request, res: Response): Promise<void> {
     try {
       const { email, password, username, instrument, admin } = req.body;
-      const profileImage = req.file?.path || '';
   
       if (!email || !password || !username || !instrument) {
         res.status(400).json({ message: 'Missing required fields' });
@@ -79,7 +78,6 @@ async create(req: Request, res: Response): Promise<void> {
         password:     hashed,
         username,
         instrument,
-        profileImage,
       });
       const saved   = await newUser.save();
   
@@ -94,7 +92,6 @@ async create(req: Request, res: Response): Promise<void> {
           email:         saved.email,
           username:      saved.username,
           instrument:    saved.instrument,
-          profileImage:  saved.profileImage,
         },
         tokens,
       });
@@ -130,7 +127,6 @@ async create(req: Request, res: Response): Promise<void> {
           email: user.email,
           username: user.username,
           instrument: user.instrument,
-          profileImage: user.profileImage,
         },
         tokens,
       });
@@ -187,7 +183,6 @@ async create(req: Request, res: Response): Promise<void> {
         email: user.email,
         username: user.username,
         instrument: user.instrument,
-        profileImage: user.profileImage,
         admin: user.admin
       });
     } catch (error) {

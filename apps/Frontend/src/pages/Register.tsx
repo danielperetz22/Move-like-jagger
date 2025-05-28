@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/authcontext';
@@ -6,7 +6,6 @@ import { useAuth } from '../context/authcontext';
 const Register: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -15,8 +14,7 @@ const Register: React.FC = () => {
     username: '',
     instrument: '',
   });
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,19 +23,7 @@ const Register: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setProfileImage(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+ 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +42,6 @@ const Register: React.FC = () => {
         password: formData.password,
         username: formData.username,
         instrument: formData.instrument,
-        profileImage: profileImage || undefined,
       });
       
       navigate('/main');
@@ -85,29 +70,7 @@ const Register: React.FC = () => {
           )}
           
           <form onSubmit={handleSubmit} className="space-y-2">
-            {/* Profile Image */}
-            <div className="flex flex-col items-center mb-4">
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-[#60212e] hover:opacity-90 transition-opacity"
-              >
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Profile preview" className="w-full h-full object-cover" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                )}
-              </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              <p className="text-sm text-gray-500 mt-2">Click to upload profile photo</p>
-            </div>
+           
             
             {/* Username */}
             <div>

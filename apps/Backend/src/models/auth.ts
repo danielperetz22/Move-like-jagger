@@ -8,7 +8,6 @@ export interface IUser extends Document {
   password: string;
   instrument: string;
   refreshTokens: string[];
-  profileImage?: string;
 }
 
 const UserSchema: Schema = new Schema(
@@ -20,7 +19,6 @@ const UserSchema: Schema = new Schema(
     password: { type: String, default: '' },
     instrument: { type: String, required: true },
     refreshTokens: { type: [String], default: [] },
-    profileImage: { type: String, default: '' },
   },
   { timestamps: true }
 );
