@@ -4,7 +4,6 @@ import { useAuth } from '../context/authcontext';
 import axiosInstance from '../axiosinstance';
 import Button from '../components/ui/Button';
 import LyricsDisplay from '../components/LyricsDisplay';
-import Member from '../components/Member';
 
 interface ShowDetails {
   _id: string;
