@@ -34,8 +34,7 @@ export class ShowController {
           lyrics: song.rawLyrics,
           chords: song.chords || []
         },
-        participants: [], // Empty participants since we don't use groups
-        status: 'created'
+        status: 'active', // Default to active
       });
       
       await show.save();
@@ -119,20 +118,13 @@ export class ShowController {
     
     const showId = req.params.id;
     const show = await showModel.findById(showId)
-      .populate('createdBy', 'username')
-      .populate('participants.userId', 'username instrument');
-    
+    .populate('createdBy', 'username');
+      
     if (!show) {
       return res.status(404).json({ message: 'Show not found' });
     }
-    
-    // Check if user is a participant or creator
-    const isParticipant = show.participants.some(p => 
-      p.userId._id.toString() === userId.toString() && p.status === 'accepted'
-    );
     const isCreator = show.createdBy._id.toString() === userId.toString();
-    
-    if (!isParticipant && !isCreator) {
+    if (!isCreator) {
       return res.status(403).json({ message: 'Not authorized to view this show' });
     }
     

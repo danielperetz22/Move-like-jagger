@@ -10,10 +10,10 @@ import {
 const router = Router();
 router.use(authMiddleware);
 
-router.get('/', getAllSongs);
-router.get('/:id', getSongById);
-router.get('/search', searchSongs);
-router.post('/', createSong);
 
+router.get('/', getAllSongs);
+router.get('/search', searchSongs);  
+router.get('/:id', getSongById);    
+router.post('/', createSong);
 
 export default router;

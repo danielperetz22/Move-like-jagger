@@ -1,109 +1,126 @@
+// pages/AdminResult.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authcontext';
 import axiosInstance from '../axiosinstance';
-import Admin from '../components/Admin';
 import Member from '../components/Member';
 import SongSearch from '../components/SongSearch';
+import ListSongs from '../components/ListSongs';
 
 interface UserResponse {
   _id: string;
-  username: string;
-  email: string;
   admin: boolean;
-  instrument: string;
 }
-
 interface ActiveShow { _id: string; }
+
+// static list of songs that have chords and their artists
+const quickList = [
+  'aba by Shlomi Shabat',
+  'shape of you by Ed Sheeran',
+  'hey jude by The Beatles',
+  'veech shelo by Ariel Zilberg'
+];
+
+const artistMap: Record<string, string> = {
+  'aba': 'Shlomi Shabat',
+  'shape of you ': 'Ed Sheeran',
+  'hey jude ': 'The Beatles',
+  'veech shelo ': 'Ariel Zilberg'
+};
 
 const AdminResult: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
-  const initialQuery = params.get('query') || '';
-  
+  const query = params.get('query') || '';
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Handle song selection (for admin)
-  const handleSongSelected = (showId: string) => {
-    navigate(`/shows/${showId}`);
-  };
-  
-  // Handle search submission
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/admin/results?query=${encodeURIComponent(searchQuery.trim())}`);
+  const [creating, setCreating] = useState(false);
+
+  // suggestions only if query length >= 3
+  const suggestions =
+    query.trim().length >= 3
+      ? quickList.filter(name =>
+          name.toLowerCase().includes(query.trim().toLowerCase())
+        ).map(title => ({
+          title,
+          artist: artistMap[title.toLowerCase()] || ''
+        }))
+      : [];
+
+  // when suggestion clicked: create song, show, activate and navigate
+  const handleQuickSelect = async (title: string) => {
+    setCreating(true);
+    setError(null);
+    try {
+      const artist = artistMap[title.toLowerCase()] || '';
+      // 1) find or create song with correct artist
+      const songRes = await axiosInstance.post<{ _id: string }>('/songs', {
+        artist,
+        title
+      });
+      const songId = songRes.data._id;
+
+      // 2) create show
+      const showRes = await axiosInstance.post<{ _id: string }>('/shows', {
+        name: `${artist} – ${title}`,
+        songId
+      });
+      const showId = showRes.data._id;
+
+      // 3) activate show
+      await axiosInstance.put(`/shows/${showId}`, { status: 'active' });
+
+      navigate(`/shows/${showId}`);
+    } catch (e: any) {
+      setError(e.response?.data?.message || e.message);
+    } finally {
+      setCreating(false);
     }
   };
-  
-  // Check if the user is authenticated and get their role
+
+  // when SongSearch completes
+  const handleSongAdded = (showId: string) => {
+    navigate(`/shows/${showId}`);
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    
-    const fetchUserData = async () => {
+    (async () => {
       try {
         setIsLoading(true);
-        const response = await axiosInstance.get<UserResponse>('/auth/me');
-        setIsAdmin(response.data.admin);
-        
-        // If not admin, check for active session to redirect to
-        if (!response.data.admin) {
+        const { data } = await axiosInstance.get<UserResponse>('/auth/me');
+        setIsAdmin(data.admin);
+        if (!data.admin) {
+          // redirect member to active show if exists
           try {
-            const activeSessionResponse = await axiosInstance.get<ActiveShow>('/shows/active');
-            if (activeSessionResponse.data && activeSessionResponse.data._id) {
-              // Redirect to the live page if there's an active session
-              navigate(`/shows/${activeSessionResponse.data._id}`);
+            const active = await axiosInstance.get<ActiveShow>('/shows/active');
+            if (active.data._id) {
+              navigate(`/shows/${active.data._id}`);
             }
-          } catch (err) {
-            // This is expected if there are no active sessions
-            console.log('No active sessions found');
-          }
+          } catch {}
         }
-      } catch (err) {
-        console.error('Error fetching user data:', err);
+      } catch (e) {
+        console.error(e);
         setError('Failed to load user data');
       } finally {
         setIsLoading(false);
       }
-    };
-    
-    fetchUserData();
-    
-    // Set up polling for members to check for active sessions
-    let interval: number | undefined;
-    
-    if (isAuthenticated && !isAdmin) {
-      interval = window.setInterval(async () => {
-        try {
-          const activeSessionResponse = await axiosInstance.get<ActiveShow>('/shows/active');
-          if (activeSessionResponse.data && activeSessionResponse.data._id) {
-            // Redirect to the live page if there's an active session
-            navigate(`/shows/${activeSessionResponse.data._id}`);
-          }
-        } catch (err) {
-          // Ignore errors, just keep polling
-        }
-      }, 5000); // Check every 5 seconds
-    }
-    
-    return () => {
-      if (interval) {
-        window.clearInterval(interval);
-      }
-    };
-  }, [isAuthenticated, navigate, isAdmin]);
-  
+    })();
+  }, [isAuthenticated, navigate]);
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
-  
+  if (!isAdmin) {
+    return <Member />;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {error && (
@@ -111,20 +128,21 @@ const AdminResult: React.FC = () => {
           <p>{error}</p>
         </div>
       )}
-      
-      {isAdmin ? (
-        <>
-          <div className="admin-container mt-8"> 
-            {/* Original Admin component for creating songs directly */}
-            <SongSearch
-            initialTitle={initialQuery}
-            onSongAdded={handleSongSelected}
-         />
-          </div>
-        </>
-      ) : (
-        <Member />
-      )}
+
+      <h1 className="text-3xl font-bold mb-6 text-[#516578]">Admin Main Page</h1>
+
+      {/* Quick suggestions */}
+      <ListSongs
+        songs={suggestions.map(suggestion => suggestion.title)}
+        onSelect={handleQuickSelect}
+      />
+      {creating && <p className="text-gray-500 mb-4">Starting session…</p>}
+
+      {/* Full SongSearch form */}
+      <SongSearch
+        initialTitle={query}
+        onSongAdded={handleSongAdded}
+      />
     </div>
   );
 };

@@ -3,9 +3,7 @@ import Button from './ui/Button';
 import axiosInstance from '../axiosinstance';
 
 interface SongSearchProps {
-  /** initial query from URL (e.g. “hey jude”) */
   initialTitle?: string;
-  /** callback to notify parent that a show was created & activated */
   onSongAdded: (showId: string) => void;
 }
 
@@ -24,7 +22,6 @@ export const SongSearch: React.FC<SongSearchProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // When initialTitle changes (e.g. from ?query=), auto-complete via Gemini
   useEffect(() => {
     if (!initialTitle) return;
 
@@ -118,10 +115,9 @@ export const SongSearch: React.FC<SongSearchProps> = ({
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-      <h2 className="text-2xl font-semibold mb-4 text-[#516578]">
-        Start Live Session
-      </h2>
+    <div className="bg-white rounded-lg py-6 mb-8">
+      <p className="mb-2 font-semibold font-assistant text-2xl">
+        Available songs with lyrics only matching your search:</p>
 
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
@@ -178,7 +174,7 @@ export const SongSearch: React.FC<SongSearchProps> = ({
       {alternativeTitle && (
         <div className="mt-4 p-4 bg-yellow-50 border border-yellow-300 rounded">
           <p className="text-sm text-gray-800">
-            אפשרות נוספת: <strong>{alternativeTitle}</strong>
+             other opsions <strong>{alternativeTitle}</strong>
           </p>
         </div>
       )}

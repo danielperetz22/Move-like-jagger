@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import app from '../app';
 import userModel from '../models/auth';
-import groupModel from '../models/group';
 import songModel from '../models/song';
 import showModel from '../models/show';
 

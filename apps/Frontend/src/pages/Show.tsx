@@ -4,6 +4,7 @@ import { useAuth } from '../context/authcontext';
 import axiosInstance from '../axiosinstance';
 import Button from '../components/ui/Button';
 import LyricsDisplay from '../components/LyricsDisplay';
+import Member from '../components/Member';
 
 interface ShowDetails {
   _id: string;
@@ -12,7 +13,7 @@ interface ShowDetails {
     _id: string;
     username: string;
   };
-  groupId: {
+  groupId?: {
     _id: string;
     name: string;
   };
@@ -23,7 +24,7 @@ interface ShowDetails {
     rawLyrics?: string;
     chords: any[];
   };
-  participants: Array<{
+  participants?: Array<{
     userId: {
       _id: string;
       username: string;
@@ -71,6 +72,7 @@ const Show: React.FC = () => {
         const userResponse = await axiosInstance.get<UserResponse>('/auth/me');
         const me = userResponse.data;
         setIsAdmin(me.admin);
+       
         
         // Get show details
         const showResponse = await axiosInstance.get<ShowDetails>(`/shows/${id}`);
@@ -79,11 +81,17 @@ const Show: React.FC = () => {
         if (me.instrument.toLowerCase() === 'vocals') {
           setShowChords(false);
         } else {
-          const myPart = s.participants.find(p => p.userId._id === me._id);
-          if (myPart) {
-            setShowChords(myPart.userId.instrument.toLowerCase() !== 'vocals');
+          // Check if participants array exists before accessing it
+          if (s.participants && s.participants.length > 0) {
+            const myPart = s.participants.find(p => p.userId._id === me._id);
+            if (myPart) {
+              setShowChords(myPart.userId.instrument.toLowerCase() !== 'vocals');
+            } else {
+              // not in participants => show chords as before
+              setShowChords(true);
+            }
           } else {
-            // not in participants => show chords as before
+            // No participants array, default to showing chords
             setShowChords(true);
           }
         }
@@ -141,11 +149,15 @@ const Show: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
-  
+    if (!isLoading && !isAdmin) {
+      return <Member />;
+    }
+
   if (error || !show) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">

@@ -61,7 +61,7 @@ const Register: React.FC = () => {
       
       navigate('/main');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Make sure all fields are filled out correctly');
     } finally {
       setIsLoading(false);
     }

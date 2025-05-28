@@ -5,6 +5,9 @@ import { authMiddleware } from '../controllers/auth';
 // Import your two JSON files:
 import heyJude from '../data/hey_jude.json';
 import veecheShlo from '../data/veech_shelo.json';
+import shapeOfYou from '../data/shape_of_you.json';
+import aba from '../data/aba.json';
+
 
 const router = Router();
 router.use(authMiddleware);
@@ -22,6 +25,13 @@ router.get(
     }
     if (artist === 'ariel zilberg' && title === 'veech shelo') {
        res.json(veecheShlo);
+       return
+    } if (artist === 'shlomi shabat' && title === 'aba') {
+      res.json(aba);
+      return
+   }
+    if (artist === 'ed sheeran' && title === 'shape of you') {
+       res.json(shapeOfYou);
        return
     }
 
