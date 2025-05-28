@@ -174,6 +174,28 @@ async create(req: Request, res: Response): Promise<void> {
     }
   }
 
+  // Get current user details
+  async getCurrentUser(req: Request, res: Response): Promise<void> {
+    try {
+      const user = await this.model.findById(req.user?._id);
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+      res.json({
+        _id: user._id,
+        email: user.email,
+        username: user.username,
+        instrument: user.instrument,
+        profileImage: user.profileImage,
+        admin: user.admin
+      });
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      res.status(500).json({ message: 'Error fetching user details' });
+    }
+  }
+
 }
   
   export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -202,3 +224,26 @@ async create(req: Request, res: Response): Promise<void> {
       next();
     });
   };
+
+export const searchUsers = async (req: Request, res: Response): Promise<void> => {
+  const { query } = req.query as { query: string };
+  if (!query) {
+    res.status(400).json({ message: 'Query is required' });
+    return;
+  }
+
+  try {
+    const users = await userModel.find({
+      $or: [
+        { username: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } },
+      ],
+      admin: false, 
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ message: 'Error searching users' });
+  }
+};
