@@ -52,7 +52,7 @@ app.use((req: Request, res: Response) => {
 
 // Global Error Handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
-  console.error("🔥 Server error:", err);
+  console.error("Server error:", err);
 
   if (process.env.NODE_ENV !== "production") {
     res.status(500).json({
