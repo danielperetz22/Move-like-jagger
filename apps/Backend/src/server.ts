@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/JaMoveo';
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://danielpertz22:Mld4Ahq3BNoVguLu@cluster0.dw2ajeq.mongodb.net/';
 
 const startServer = async (): Promise<void> => {
   try {
