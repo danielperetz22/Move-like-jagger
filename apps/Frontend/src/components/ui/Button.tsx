@@ -17,12 +17,9 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const variantClasses: Record<ButtonVariant, string> = {
     primary:
-      'inline-block bg-[#6F9FF9] text-md text-white font-orienta font-semibold ' +
-      'px-1.5 py-1 border border-[#6F9FF9] rounded-full ' +
-      'hover:bg-[#5A87D6] transition-colors',
+      'font-semibold hover:underline font-assistant text-md sm:text-base md:text-lg text-[#516578] ' ,
     secondary:
-      'inline-block px-1.5 py-1 border border-[#6F9FF9] bg-white text-black rounded-full text-md ' +
-      'hover:bg-[#6F9FF9]/10 transition-colors font-orienta',
+      'font-semibold hover:underline font-assistant text-md sm:text-base md:text-lg',
     outline:
       'w-full bg-white text-black text-xl sm:text-lg py-2 px-10 rounded border border-gray-300 ' +
       'hover:bg-[#f8f8f8] flex items-center justify-center gap-2',

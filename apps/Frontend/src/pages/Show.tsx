@@ -134,7 +134,7 @@ const Show: React.FC = () => {
     try {
       setIsLoading(true);
       await axiosInstance.put(`/shows/${show._id}`, { status: 'completed' });
-      navigate('/dashboard');
+      navigate('/main');
     } catch (err) {
       console.error('Error ending session:', err);
       setError('Failed to end session');
@@ -152,8 +152,8 @@ const Show: React.FC = () => {
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
           <p>{error || 'Session not found'}</p>
         </div>
-        <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
+        <Button variant="secondary" onClick={() => navigate('/main')}>
+          Back t nain
         </Button>
       </div>
     );

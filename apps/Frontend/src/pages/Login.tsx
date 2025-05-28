@@ -19,7 +19,7 @@ const Login: React.FC = () => {
     try {
       setIsLoading(true);
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/main');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid email or password');
     } finally {
@@ -28,8 +28,19 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#6F9FF9] to-[#5A87D6] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 justify-center items-center flex"
+    style={{
+      backgroundImage: `
+        repeating-linear-gradient(
+          90deg,
+          #d8d1bd 0,
+          #d8d1bd 25px,
+          #f4f2ef 25px,
+          #f4f2ef 35px
+        )
+      `
+    }}>
+      <div className="max-w-2xl w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="px-6 py-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-[#516578]">Welcome Back</h2>

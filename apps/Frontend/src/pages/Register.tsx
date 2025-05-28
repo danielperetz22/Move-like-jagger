@@ -59,7 +59,7 @@ const Register: React.FC = () => {
         profileImage: profileImage || undefined,
       });
       
-      navigate('/dashboard');
+      navigate('/main');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {
@@ -68,12 +68,25 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#6F9FF9] to-[#5A87D6] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+    <div
+    className="h-screen max-h-screen overflow-hidden px-4 sm:px-6 lg:px-8 flex justify-center items-center relative"
+    style={{
+        backgroundImage: `
+          repeating-linear-gradient(
+            90deg,
+            #d8d1bd 0,
+            #d8d1bd 25px,
+            #f4f2ef 25px,
+            #f4f2ef 35px
+          )
+        `
+      }}
+    >
+      <div className="relative max-w-2xl w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="px-6 py-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-[#516578]">Join JaMoveo</h2>
-            <p className="mt-2 text-gray-600">Create your account and start making music</p>
+            <p className=" text-gray-600">Create your account and start making music</p>
           </div>
           
           {error && (

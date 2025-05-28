@@ -5,6 +5,7 @@ import RegisterPage from './pages/Register';
 import LoginPage from './pages/Login';
 import DashboardPage from './pages/Dashboard';
 import ShowDetail from './pages/Show';
+import AdminResultsPage from './pages/AdminResult';
 
 function App() {
   return (
@@ -14,7 +15,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/main" element={<DashboardPage />} />
+          <Route path="/admin/results" element={<AdminResultsPage />} />
           <Route path="/shows/:id" element={<ShowDetail />} />
         </Routes>
     </Router>

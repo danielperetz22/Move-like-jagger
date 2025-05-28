@@ -11,6 +11,7 @@ import lyricsRoutes from './routes/lyrics';
 import chordsRoutes from './routes/chords';
 import groupRoutes from './routes/group';
 import showRoutes from './routes/show';
+import GeminiRoutes from './routes/gemini'; 
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/lyrics', lyricsRoutes);
 app.use('/api/chords', chordsRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/shows', showRoutes);  
+app.use('/api/gemini', GeminiRoutes);
 
 
 // 404 handler

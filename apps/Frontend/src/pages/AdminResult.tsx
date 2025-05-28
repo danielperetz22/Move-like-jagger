@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authcontext';
 import axiosInstance from '../axiosinstance';
+import Admin from '../components/Admin';
 import Member from '../components/Member';
-import Button from '../components/ui/Button';
+import SongSearch from '../components/SongSearch';
 
 interface UserResponse {
   _id: string;
@@ -15,14 +16,21 @@ interface UserResponse {
 
 interface ActiveShow { _id: string; }
 
-const Dashboard: React.FC = () => {
+const AdminResult: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const initialQuery = params.get('query') || '';
   
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Handle song selection (for admin)
+  const handleSongSelected = (showId: string) => {
+    navigate(`/shows/${showId}`);
+  };
   
   // Handle search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -105,30 +113,15 @@ const Dashboard: React.FC = () => {
       )}
       
       {isAdmin ? (
-          <div className="admin-container mt-8">
-            <h1 className="text-3xl font-bold mb-6 text-[#516578]">Admin Main Page</h1>
-            
-            {/* Song Search Box */}
-            <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-[#516578]">Search any song...</h2>
-              <form onSubmit={handleSearchSubmit} className="flex space-x-2">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter song title or artist"
-                />
-                <Button
-                  variant="primary"
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Search
-                </Button>
-              </form>
-            </div>
+        <>
+          <div className="admin-container mt-8"> 
+            {/* Original Admin component for creating songs directly */}
+            <SongSearch
+            initialTitle={initialQuery}
+            onSongAdded={handleSongSelected}
+         />
           </div>
+        </>
       ) : (
         <Member />
       )}
@@ -136,4 +129,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default AdminResult;
