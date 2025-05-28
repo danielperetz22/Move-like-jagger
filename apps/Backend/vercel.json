@@ -3,14 +3,16 @@
     "version": 2,
     "builds": [
         {
-            "src": "./src/server.ts",
-            "use": "@vercel/node"
+            "src": "package.json",
+            "use": "@vercel/static-build"
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "/src/server.ts"
+            "dest": "/index.html"
         }
-    ]
+    ],
+    "outputDirectory": "build"
+
 }
