@@ -106,14 +106,45 @@ const Show: React.FC = () => {
     
     fetchData();
     
-    // Cleanup interval on unmount
+    // KEEP just one polling mechanism for checking show status
+    let statusCheckInterval: number | undefined;
+    let isPolling = false;
+    
+    // All users need to check if the show is still active, not just non-admins
+    const checkShowStatus = async () => {
+      if (isPolling) return; // Prevent overlapping calls
+      
+      try {
+        isPolling = true;
+        // Check if the show is still active
+        const response = await axiosInstance.get<ShowDetails>(`/shows/${id}`);
+        if (response.data.status !== 'active') {
+          console.log('Show is no longer active, redirecting to dashboard');
+          navigate('/main');
+        }
+      } catch (err) {
+        // If there's an error (like 404), redirect to main
+        console.log('Error checking show status, redirecting to dashboard');
+        navigate('/main');
+      } finally {
+        isPolling = false;
+      }
+    };
+    
+    // Set a longer interval (7.5 seconds) to reduce API load
+    statusCheckInterval = window.setInterval(checkShowStatus, 7500);
+    
+    // Cleanup intervals on unmount
     return () => {
       if (scrollIntervalId) {
         window.clearInterval(scrollIntervalId);
       }
+      if (statusCheckInterval) {
+        window.clearInterval(statusCheckInterval);
+      }
     };
-  }, [id, isAuthenticated, navigate]);
-  
+  }, [id, isAuthenticated, navigate, isAdmin]);
+
   // Toggle auto-scrolling
   const toggleAutoScroll = () => {
     if (isAutoScrolling && scrollIntervalId) {
@@ -135,17 +166,37 @@ const Show: React.FC = () => {
     }
   };
   
-  // End the session (admin only)
+  // End the session (admin only) - now deletes the show instead of completing it
   const endSession = async () => {
     if (!show || !isAdmin) return;
     
     try {
+      console.log('Admin deleting show:', show._id);
       setIsLoading(true);
-      await axiosInstance.put(`/shows/${show._id}`, { status: 'completed' });
+      
+      // Delete this specific show
+      const response = await axiosInstance.delete(`/shows/${show._id}`);
+      
+      console.log('Show deleted successfully:', response.data);
+      
+      // Set a session storage flag to prevent immediate polling redirects
+      sessionStorage.setItem('preventShowRedirect', 'true');
+      
+      // Also delete any other active shows to ensure clean state
+      await axiosInstance.delete('/shows/delete-all');
+      
+      // Navigate immediately rather than waiting for polling
       navigate('/main');
-    } catch (err) {
+      
+      // Clear the flag after a delay to allow normal operation later
+      setTimeout(() => {
+        sessionStorage.removeItem('preventShowRedirect');
+      }, 3000);
+      
+    } catch (err: any) {
       console.error('Error ending session:', err);
-      setError('Failed to end session');
+      console.error('Error details:', err.response?.data);
+      setError(err.response?.data?.message || 'Failed to end session');
       setIsLoading(false);
     }
   };
@@ -154,9 +205,6 @@ const Show: React.FC = () => {
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
-    if (!isLoading && !isAdmin) {
-      return <Member />;
-    }
 
   if (error || !show) {
     return (

@@ -106,6 +106,36 @@ const Dashboard: React.FC = () => {
       }
     };
   }, [isAuthenticated, navigate, isAdmin]);
+
+  // Set up polling specifically for non-admin users
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    console.log('Setting up polling for active shows');
+    
+    const checkForActiveShow = async () => {
+      try {
+        const response = await axiosInstance.get<ActiveShow>('/shows/active');
+        if (response.data && response.data._id) {
+          console.log('Found active show, redirecting:', response.data._id);
+          navigate(`/shows/${response.data._id}`);
+        }
+      } catch (err) {
+        // No active shows, that's normal
+      }
+    };
+    
+    // Check immediately
+    checkForActiveShow();
+    
+    // Then set up interval - this is important for BOTH admins and members
+    // So they can be redirected to new shows that are created
+    const intervalId = window.setInterval(checkForActiveShow, 3000); // Check every 3 seconds
+    
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isAuthenticated, navigate]);
   
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;

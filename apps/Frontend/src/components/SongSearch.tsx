@@ -107,7 +107,8 @@ export const SongSearch: React.FC<SongSearchProps> = ({
       }
       const songId = songRes.data._id;
 
-      // Step 2: create show
+      // Step 2: create show (this will auto-complete any previous shows)
+      console.log('Creating new show and ending any previous active shows');
       const showRes = await axiosInstance.post<IdResponse>('/shows', {
         name: `${artist || comp.artistName} – ${corrected}`,
         songId,
@@ -117,10 +118,12 @@ export const SongSearch: React.FC<SongSearchProps> = ({
       }
       const showId = showRes.data._id;
 
-      // Step 3: activate show
-      await axiosInstance.put(`/shows/${showId}`, { status: 'active' });
+      // Step 3: we don't need to activate show anymore as it's active by default
+      // The backend already takes care of ending previous shows
 
       setSuccess('Session started! Redirecting…');
+      
+      // Give a moment for polling to redirect everyone else
       setTimeout(() => onSongAdded(showId), 800);
     } catch (err: any) {
       console.error(err);

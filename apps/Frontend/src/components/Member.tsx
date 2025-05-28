@@ -1,22 +1,9 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../axiosinstance';
+import React from 'react';
 
 const Member: React.FC = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const { data } = await axiosInstance.get<{ _id: string }>('/shows/active');
-        if (data._id) navigate(`/shows/${data._id}`);
-      } catch { /* no active show */ }
-    };
-    check();
-    const id = setInterval(check, 5000);
-    return () => clearInterval(id);
-  }, []);
-
+  // REMOVE the polling here - it's already handled by the Dashboard component
+  // This prevents duplicate polling
+  
   return (
     <div className="flex flex-col items-center justify-center h-[70vh]">
       <h1 className="text-3xl font-bold mb-4 text-[#516578]">Waiting for next song</h1>
