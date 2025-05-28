@@ -1,38 +1,41 @@
 import mongoose from 'mongoose';
-import app from './app';
 import dotenv from 'dotenv';
+import app from './app';
 
 dotenv.config();
 
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://danielpertz22:Mld4Ahq3BNoVguLu@cluster0.dw2ajeq.mongodb.net/';
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error('❌ Missing MONGO_URI environment variable');
+  process.exit(1);
+}
 
 const startServer = async (): Promise<void> => {
   try {
-    // Add connection options for better stability
     await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      serverSelectionTimeoutMS: 5000,
     });
-    
-    console.log('✅ MongoDB connected');
 
-    // Set mongoose debug mode in development to log queries
+    console.log('MongoDB connected');
+
     if (process.env.NODE_ENV !== 'production') {
       mongoose.set('debug', true);
     }
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on PORT ${PORT}`);
+      console.log(`Server running on PORT ${PORT}`);
     });
   } catch (err) {
-    console.error('❌ Server startup error:', err);
+    console.error(' Server startup error:', err);
     process.exit(1);
   }
 };
 
-// Add unhandled promise rejection handler
+// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error(' Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 startServer();

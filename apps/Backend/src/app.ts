@@ -1,62 +1,55 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
-import express, { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import morgan from 'morgan';
-import cookieParser from 'cookie-parser';
-import authRoutses from './routes/auth';
-import songRoutes from './routes/song';
-import lyricsRoutes from './routes/lyrics';
-import chordsRoutes from './routes/chords';
-import showRoutes from './routes/show';
-import GeminiRoutes from './routes/gemini'; 
+
+import express, { Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import cors from "cors";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+
+import authRoutes from "./routes/auth";
+import songRoutes from "./routes/song";
+import lyricsRoutes from "./routes/lyrics";
+import chordsRoutes from "./routes/chords";
+import showRoutes from "./routes/show";
+import geminiRoutes from "./routes/gemini";
 
 const app = express();
 
-// Security headers
+// Security middleware
 app.use(helmet());
-// Enable CORS
 app.use(cors());
-// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// HTTP request logger
-app.use(morgan('dev'));
-// Cookie parser for handling cookies
+app.use(morgan("dev"));
 app.use(cookieParser());
-// API endpoints
-app.use('/api/auth', authRoutses);
-app.use('/api/songs', songRoutes);
-app.use('/api/lyrics', lyricsRoutes);
-app.use('/api/chords', chordsRoutes);
-app.use('/api/shows', showRoutes);  
-app.use('/api/gemini', GeminiRoutes);
 
+// Route setup
+app.use("/api/auth", authRoutes);
+app.use("/api/songs", songRoutes);
+app.use("/api/lyrics", lyricsRoutes);
+app.use("/api/chords", chordsRoutes);
+app.use("/api/shows", showRoutes);
+app.use("/api/gemini", geminiRoutes);
 
-// 404 handler
+// 404 Handler
 app.use((req: Request, res: Response) => {
-  res.status(404).json({ message: 'Not Found' });
+  res.status(404).json({ message: "Not Found" });
 });
 
-// Global error handler - use ErrorRequestHandler type
+// Global Error Handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
-  console.error('🔥 Server error:', err);
-  
-  // Return more detailed error information in development
-  if (process.env.NODE_ENV !== 'production') {
+  console.error("🔥 Server error:", err);
+
+  if (process.env.NODE_ENV !== "production") {
     res.status(500).json({
-      message: err.message || 'Internal Server Error',
-      stack: err.stack,
-      error: err
+      error: err,
     });
-    return;
+  } else {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
-  
-  // Send limited info in production
-  res.status(500).json({ 
-    message: err.message || 'Internal Server Error'
-  });
 });
 
 export default app;

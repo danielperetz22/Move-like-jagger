@@ -9,7 +9,7 @@ const API_KEY = process.env.GEMINI_API_KEY;
 
 export interface SongCompletion {
   correctedTitle: string;
-  alternativeTitles: string[]; // Changed to array of alternatives
+  alternativeTitles: string[]; 
   artistName: string;
 }
 

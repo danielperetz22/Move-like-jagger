@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import { authMiddleware } from '../controllers/auth';
 
-// Import your two JSON files:
+// Import your 4 JSON files:
 import heyJude from '../data/hey_jude.json';
 import veecheShlo from '../data/veech_shelo.json';
 import shapeOfYou from '../data/shape_of_you.json';
