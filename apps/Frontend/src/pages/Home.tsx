@@ -1,5 +1,5 @@
 import React from 'react';
-import Hero from '../components/Hero1'; 
+import Hero from '../components/Hero'; 
 
 const HomePage: React.FC = () => {
   return (
