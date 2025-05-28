@@ -17,7 +17,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const variantClasses: Record<ButtonVariant, string> = {
     primary:
-      'font-semibold hover:underline font-assistant text-md sm:text-base md:text-lg text-[#516578] ' ,
+      'font-semibold hover:underline font-assistant text-md sm:text-base md:text-lg text-[#60212e] ' ,
     secondary:
       'font-semibold hover:underline font-assistant text-md sm:text-base md:text-lg',
     outline:

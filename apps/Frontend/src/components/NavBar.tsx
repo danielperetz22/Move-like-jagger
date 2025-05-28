@@ -18,13 +18,13 @@ const NavBar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-gray-100 px-6 py-2">
+    <nav className="bg-[#f4f2ef] px-6 py-2">
       <div className="flex items-center justify-between">
         <div 
           className="flex items-center cursor-pointer" 
           onClick={() => navigate('/')}
         >
-          <span className="text-2xl font-bold font-heebo text-[#516578]">
+          <span className="text-3xl font-extrabold font-heebo text-[#b8a99d]">
             JaMoveo
           </span>
         </div>
