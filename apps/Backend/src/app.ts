@@ -19,10 +19,14 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: '*',
+  origin: 'https://ja-moveo-enon.vercel.app',
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
