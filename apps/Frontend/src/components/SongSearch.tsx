@@ -15,8 +15,7 @@ export const SongSearch: React.FC<SongSearchProps> = ({
   initialTitle = '',
   onSongAdded,
 }) => {
-  const [artist, setArtist] = useState('');
-  const [title, setTitle] = useState('');
+
   const [alternatives, setAlternatives] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +41,6 @@ export const SongSearch: React.FC<SongSearchProps> = ({
         }>('/gemini/song-completion', {
           songName: initialTitle.trim(),
         });
-
-        setTitle(data.correctedTitle);
-        setArtist(data.artistName);
         
         // Use alternativeTitles array if available, otherwise fallback to old format
         let altOptions: string[] = [];
