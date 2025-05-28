@@ -54,6 +54,8 @@ const Show: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [scrollIntervalId, setScrollIntervalId] = useState<number | null>(null);
+  const [showChords, setShowChords] = useState(true);
+
   
   useEffect(() => {
     if (!isAuthenticated || !id) {
@@ -67,11 +69,24 @@ const Show: React.FC = () => {
         
         // Get current user info
         const userResponse = await axiosInstance.get<UserResponse>('/auth/me');
-        setIsAdmin(userResponse.data.admin);
+        const me = userResponse.data;
+        setIsAdmin(me.admin);
         
         // Get show details
         const showResponse = await axiosInstance.get<ShowDetails>(`/shows/${id}`);
-        setShow(showResponse.data);
+        const s = showResponse.data;
+        setShow(s);
+        if (me.instrument.toLowerCase() === 'vocals') {
+          setShowChords(false);
+        } else {
+          const myPart = s.participants.find(p => p.userId._id === me._id);
+          if (myPart) {
+            setShowChords(myPart.userId.instrument.toLowerCase() !== 'vocals');
+          } else {
+            // not in participants => show chords as before
+            setShowChords(true);
+          }
+        }
         
       } catch (err) {
         console.error('Error fetching show details:', err);
@@ -170,10 +185,11 @@ const Show: React.FC = () => {
         style={{ height: 'calc(100vh - 70px)' }} // Adjust based on header height
       >
         {/* Display lyrics and chords for all users */}
-        <LyricsDisplay 
-          artist={show.song.artist} 
-          title={show.song.title} 
-          />
+        < LyricsDisplay
+          artist={show.song.artist}
+          title={show.song.title}
+          showChords={showChords}
+        />
       </div>
       
       {/* Floating auto-scroll button */}

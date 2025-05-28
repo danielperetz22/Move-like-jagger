@@ -110,33 +110,52 @@ const SongSearch: React.FC<SongSearchProps> = ({ onSongAdded }) => {
         </div>
       )}
       
-      <form onSubmit={handleSearch} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Artist</label>
-            <input
-              type="text"
-              value={artist}
-              onChange={e => setArtist(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter artist name"
-              disabled={isLoading}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Song Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter song title"
-              disabled={isLoading}
-            />
-          </div>
+      <form onSubmit={handleSearch} className="space-y-6">
+        {/* Artist */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Artist</label>
+          <input
+            type="text"
+            value={artist}
+            onChange={e => setArtist(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter artist name"
+            disabled={isLoading}
+          />
         </div>
-        
+
+        {/* Song Title */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Song Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter song title"
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Suggested songs with chords */}
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-700 mb-1">Songs with built-in chords:</p>
+          <ul className="flex space-x-4">
+            <li
+              className="cursor-pointer text-blue-600 hover:underline"
+              onClick={() => { setArtist('The Beatles'); setTitle('Hey Jude'); }}
+            >
+              The Beatles - Hey Jude
+            </li>
+            <li
+              className="cursor-pointer text-blue-600 hover:underline"
+              onClick={() => { setArtist('Ariel Zilberg'); setTitle('Veech Shelo'); }}
+            >
+              Ariel Zilberg - Veech Shelo
+            </li>
+          </ul>
+        </div>
+
         <Button
           type="submit"
           variant="primary"
