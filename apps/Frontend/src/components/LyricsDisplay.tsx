@@ -12,10 +12,14 @@ interface LyricsResponse {
   lyrics: string;
   source?: string;
 }
+interface ChordData {
+    pos: number;
+    name: string;
+}
 
 const LyricsDisplay: React.FC<Props> = ({ artist, title }) => {
   const [lyrics, setLyrics] = useState<string>('');
-  const [chords, setChords] = useState<string[]>([]);
+  const [chords, setChords] = useState<ChordData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,28 +27,29 @@ const LyricsDisplay: React.FC<Props> = ({ artist, title }) => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
-
+  
       try {
-        const lyricsResp = await axiosInstance.get<LyricsResponse>(
+        const { data: lyricsResp } = await axiosInstance.get<LyricsResponse>(
           `/lyrics/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
         );
-        setLyrics(lyricsResp.data.lyrics || '');
-
-        const chordNames = await axiosInstance
-          .get<string[]>('/chords', { params: { chord: title } })
-          .then(r => r.data)
-          .catch(() => []);
-        setChords(chordNames);
+        setLyrics(lyricsResp.lyrics || '');
+  
+        const { data: chordData } = await axiosInstance.get<ChordData[]>(
+          '/chords',
+          { params: { artist, title } }
+        );
+        setChords(chordData);
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('Error fetching:', err);
         setError('Failed to load content');
       } finally {
         setIsLoading(false);
       }
     };
-
+  
     fetchData();
   }, [artist, title]);
+  
 
   if (isLoading) return <div className="p-4 text-center">Loading lyrics and chords...</div>;
 
@@ -56,8 +61,8 @@ const LyricsDisplay: React.FC<Props> = ({ artist, title }) => {
         <div className="mb-6 p-4 bg-gray-700 rounded-lg">
           <h4 className="text-sm font-medium mb-3 text-gray-300">Chord Progression:</h4>
           <div className="flex flex-wrap gap-2">
-            {chords.map((name, idx) => (
-              <Chord key={idx} chordSymbol={name} />
+            {chords.map((c, idx) => (
+               <Chord key={idx} chordSymbol={c.name} />
             ))}
           </div>
           <p className="mt-3 text-xs text-gray-400">
