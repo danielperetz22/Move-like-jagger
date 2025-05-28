@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
-  console.error('❌ Missing MONGO_URI environment variable');
+  console.error('Missing MONGO_URI environment variable');
   process.exit(1);
 }
 
