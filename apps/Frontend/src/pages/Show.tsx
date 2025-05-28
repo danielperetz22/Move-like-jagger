@@ -165,25 +165,26 @@ const Show: React.FC = () => {
           <p>{error || 'Session not found'}</p>
         </div>
         <Button variant="secondary" onClick={() => navigate('/main')}>
-          Back t nain
+          Back to main
         </Button>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div 
+      className="min-h-screen font-assistant bg-[#f4f2ef] "
+    >
       {/* Header */}
-      <div className="bg-gray-900 p-4 sticky top-0 z-10">
-        <div className="container mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">
-              {show.song.artist} - {show.song.title}
-            </h1>
-          </div>
+      <div className="p-4 top-0 z-10">
+      <div className="container mx-auto grid grid-cols-3 items-center">
+      <div></div>
+      <p className="text-3xl lg:text-4xl text-[#e68c3a] font-semibold text-center">
+      {show.song.title} by {show.song.artist} 
+      </p>
           
           {isAdmin && (
-            <Button variant="danger" onClick={endSession}>
+            <Button variant='secondary' className='flex justify-end text-lg' onClick={endSession}>
               Quit
             </Button>
           )}
@@ -209,7 +210,7 @@ const Show: React.FC = () => {
         <button
           onClick={toggleAutoScroll}
           className={`rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition-colors ${
-            isAutoScrolling ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+            isAutoScrolling ? 'bg-red-800 hover:bg-red-900' : 'bg-gray-400 hover:bg-gray-500'
           }`}
         >
           {isAutoScrolling ? (

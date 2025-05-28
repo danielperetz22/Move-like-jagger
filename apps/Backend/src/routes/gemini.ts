@@ -6,7 +6,7 @@ const router = express.Router();
 /**
  * POST /api/gemini/song-completion
  * Request body: { songName: string }
- * Response: { correctedTitle, alternativeTitle, artistName }
+ * Response: { correctedTitle, alternativeTitles, artistName }
  */
 router.post("/song-completion", async (req, res) => {
   const { songName } = req.body as { songName?: string };

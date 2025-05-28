@@ -81,10 +81,7 @@ const LyricsDisplay: React.FC<Props> = ({ artist, title , showChords }) => {
   }
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="bg-gray-800 text-white rounded-lg shadow-md p-6">
-      <h3 className="text-2xl font-semibold mb-4 text-blue-300">
-        {artist} – {title}
-      </h3>
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="bg-white rounded-lg text-gray-800 font-assistant text-2xl md:text-3xl rounded-lg shadow-md p-6">
 
       <div className="space-y-4">
         {blocks.map((block, i) => (
@@ -95,7 +92,7 @@ const LyricsDisplay: React.FC<Props> = ({ artist, title , showChords }) => {
                 {block.map((tok, j) => (
                   <span
                     key={j}
-                    className="inline-block mx-1 text-blue-300 font-semibold"
+                    className="inline-block mx-1 text-[#60212e] font-semibold"
                     style={{ minWidth: '2ch', textAlign: 'center' }}
                   >
                     {tok.chords ?? '\u00A0'}

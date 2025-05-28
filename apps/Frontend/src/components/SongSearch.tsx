@@ -17,7 +17,7 @@ export const SongSearch: React.FC<SongSearchProps> = ({
 }) => {
   const [artist, setArtist] = useState('');
   const [title, setTitle] = useState('');
-  const [alternativeTitle, setAlternativeTitle] = useState('');
+  const [alternatives, setAlternatives] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -32,7 +32,8 @@ export const SongSearch: React.FC<SongSearchProps> = ({
 
         const { data } = await axiosInstance.post<{
           correctedTitle: string;
-          alternativeTitle: string;
+          alternativeTitles?: string[];  // Updated to match new API
+          alternativeTitle?: string;     // Keep for backward compatibility
           artistName: string;
         }>('/gemini/song-completion', {
           songName: initialTitle.trim(),
@@ -40,7 +41,16 @@ export const SongSearch: React.FC<SongSearchProps> = ({
 
         setTitle(data.correctedTitle);
         setArtist(data.artistName);
-        setAlternativeTitle(data.alternativeTitle);
+        
+        // Use alternativeTitles array if available, otherwise fallback to old format
+        let altOptions: string[] = [];
+        if (data.alternativeTitles && data.alternativeTitles.length > 0) {
+          altOptions = data.alternativeTitles;
+        } else if (data.alternativeTitle && data.alternativeTitle !== data.correctedTitle) {
+          altOptions = [data.alternativeTitle];
+        }
+        
+        setAlternatives(altOptions);
       } catch (e) {
         console.error('Gemini autocomplete error', e);
         setError('Failed to autocomplete song info');
@@ -66,7 +76,8 @@ export const SongSearch: React.FC<SongSearchProps> = ({
       // run Gemini on whatever is currently in title (user may have edited)
       const { data: comp } = await axiosInstance.post<{
         correctedTitle: string;
-        alternativeTitle: string;
+        alternativeTitles?: string[];  // Updated to match new API
+        alternativeTitle?: string;     // Keep for backward compatibility
         artistName: string;
       }>('/gemini/song-completion', {
         songName: title.trim(),
@@ -75,7 +86,16 @@ export const SongSearch: React.FC<SongSearchProps> = ({
       const corrected = comp.correctedTitle;
       setTitle(corrected);
       setArtist(prev => prev.trim() || comp.artistName);
-      setAlternativeTitle(comp.alternativeTitle);
+      
+      // Use alternativeTitles array if available, otherwise fallback to old format
+      let altOptions: string[] = [];
+      if (comp.alternativeTitles && comp.alternativeTitles.length > 0) {
+        altOptions = comp.alternativeTitles;
+      } else if (comp.alternativeTitle && comp.alternativeTitle !== corrected) {
+        altOptions = [comp.alternativeTitle];
+      }
+      
+      setAlternatives(altOptions);
 
       // Step 1: create or find song
       const songRes = await axiosInstance.post<IdResponse>('/songs', {
@@ -114,10 +134,32 @@ export const SongSearch: React.FC<SongSearchProps> = ({
     }
   };
 
+  // Function to handle selecting an alternative
+  const handleSelectAlternative = async (alt: string) => {
+    setTitle(alt);
+    
+    // Get the artist for this title using Gemini
+    try {
+      const { data } = await axiosInstance.post<{
+        correctedTitle: string;
+        alternativeTitle: string;
+        artistName: string;
+      }>('/gemini/song-completion', {
+        songName: alt.trim(),
+      });
+      
+      setArtist(data.artistName);
+    } catch (e) {
+      console.error('Failed to get artist for selected song', e);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg py-6 mb-8">
+    <div className="bg-white rounded-lg p-6 mb-8">
+
       <p className="mb-2 font-semibold font-assistant text-2xl">
         Available songs with lyrics only matching your search:</p>
+
 
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
@@ -171,11 +213,22 @@ export const SongSearch: React.FC<SongSearchProps> = ({
         </Button>
       </form>
 
-      {alternativeTitle && (
+      {alternatives.length > 0 && (
         <div className="mt-4 p-4 bg-yellow-50 border border-yellow-300 rounded">
-          <p className="text-sm text-gray-800">
-             other opsions <strong>{alternativeTitle}</strong>
+          <p className="text-sm font-medium text-gray-800 mb-2">
+            Other song options:
           </p>
+          <div className="flex flex-col gap-2">
+            {alternatives.map((alt, index) => (
+              <Button
+                key={index}
+                type="button"
+                onClick={() => handleSelectAlternative(alt)}
+              >
+                {alt}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
     </div>

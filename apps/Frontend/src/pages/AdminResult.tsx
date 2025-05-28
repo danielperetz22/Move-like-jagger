@@ -23,9 +23,9 @@ const quickList = [
 
 const artistMap: Record<string, string> = {
   'aba': 'Shlomi Shabat',
-  'shape of you ': 'Ed Sheeran',
-  'hey jude ': 'The Beatles',
-  'veech shelo ': 'Ariel Zilberg'
+  'shape of you': 'Ed Sheeran',
+  'hey jude': 'The Beatles',
+  'veech shelo': 'Ariel Zilberg'
 };
 
 const AdminResult: React.FC = () => {

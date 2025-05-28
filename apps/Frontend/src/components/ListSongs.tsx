@@ -2,36 +2,33 @@ import { type FC } from 'react';
 import Button from './ui/Button';
 
 interface ListSongsProps {
-  songs: string[];             // "title by artist" strings
-  onSelect: (full: string) => void;  // receives full string
+  songs: string[];             
+  onSelect: (full: string) => void;  
 }
 
 const ListSongs: FC<ListSongsProps> = ({ songs, onSelect }) => {
-  const count = songs.length;
-
-  // always show count or no-results message
-  const countLabel =
-    count === 0
-      ? 'No songs available with chords matching your search.'
-      : count === 1
-      ? '1 song available with chords matching your search.'
-      : `${count} songs available with chords matching your search.`;
-
   return (
-    <div className="mb-6">
-      <p className="mb-2 font-semibold font-assistant text-2xl">{countLabel}</p>
-      {count > 0 && (
-        <div className="flex flex-wrap gap-2">
+    <div className="mb-6 font-assistant">
+      <p className="mb-2 font-semibold  text-2xl">
+        Available songs with chords matching your search:
+      </p>
+      {songs.length > 0 ? (
+        <div className="flex flex-col space-y-2">
           {songs.map(full => (
             <Button
               key={full}
               variant="secondary"
-              onClick={() => onSelect(full)}
+              onClick={() => {
+                const [title] = full.split(' by ');
+                onSelect(title.trim());
+              }}
             >
               {full}
             </Button>
           ))}
         </div>
+      ) : (
+        <p className="text-gray-500">No songs available with chords matching your search.</p>
       )}
     </div>
   );

@@ -23,13 +23,28 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Handle search submission
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/admin/results?query=${encodeURIComponent(searchQuery.trim())}`);
+  const [searchError, setSearchError] = useState('');
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    if (value.trim().length > 0 && value.trim().length < 3) {
+      setSearchError('Please enter at least 3 characters to search');
+    } else {
+      setSearchError('');
     }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (searchQuery.trim().length < 3) {
+      setSearchError('Please enter at least 3 characters to search');
+      return;
+    }
+    
+    navigate(`/admin/results?query=${encodeURIComponent(searchQuery.trim())}`);
   };
   
   // Check if the user is authenticated and get their role
@@ -111,22 +126,32 @@ const Dashboard: React.FC = () => {
             {/* Song Search Box */}
             <div className="bg-white shadow-md rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-semibold mb-4 text-[#516578]">Search any song...</h2>
-              <form onSubmit={handleSearchSubmit} className="flex space-x-2">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter song title or artist"
-                />
-                <Button
-                  variant="primary"
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Search
-                </Button>
-              </form>
+              <div className="search-container">
+                <form onSubmit={handleSearch} className="flex flex-col space-y-2">
+                  {searchError && (
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-2 mb-2 text-sm">
+                      <p>{searchError}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      placeholder="Search (min 3 characters)"
+                      className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={searchQuery.trim().length < 3}
+                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
       ) : (

@@ -9,7 +9,7 @@ const API_KEY = process.env.GEMINI_API_KEY;
 
 export interface SongCompletion {
   correctedTitle: string;
-  alternativeTitle: string;
+  alternativeTitles: string[]; // Changed to array of alternatives
   artistName: string;
 }
 
@@ -26,14 +26,16 @@ User input (possibly misspelled) song title: "${songName}"
 
 Please reply with a JSON object with these fields:
 - correctedTitle: the correctly spelled song title
-- alternativeTitle: a similar song title that might match
-- artistName: the performing artist’s name
+- alternativeTitles: an array of 3-4 DIFFERENT songs (not versions of the same song) that are similar or might be what the user is looking for
+- artistName: the performing artist's name for the corrected title
+
+Important: For the alternativeTitles, provide completely different songs, not just different versions (like "live version" or "remix") of the same song.
 
 Example response format:
 \`\`\`json
 {
   "correctedTitle": "Shape of You",
-  "alternativeTitle": "The Shape of My Heart",
+  "alternativeTitles": ["Thinking Out Loud", "Perfect", "Castle on the Hill", "Photograph"],
   "artistName": "Ed Sheeran"
 }
 \`\`\`
@@ -54,7 +56,7 @@ Example response format:
       throw new Error("No response from Gemini");
     }
 
-    // חותכים את כל מה שבין ```json ו-``` בעזרת RegExp
+    // Extract JSON from the response
     const match = raw.match(/```json\s*([\s\S]*?)```/i);
     const jsonString = match
       ? match[1].trim()
@@ -68,9 +70,15 @@ Example response format:
       throw new Error("Invalid JSON received from Gemini");
     }
 
+    // Handle backward compatibility - if we get the old format with alternativeTitle
+    if ('alternativeTitle' in parsed && !parsed.alternativeTitles) {
+      const altTitle = (parsed as any).alternativeTitle;
+      parsed.alternativeTitles = altTitle ? [altTitle] : [];
+    }
+
     return {
       correctedTitle: parsed.correctedTitle || "",
-      alternativeTitle: parsed.alternativeTitle || "",
+      alternativeTitles: parsed.alternativeTitles || [],
       artistName: parsed.artistName || "",
     };
   } catch (error: any) {
