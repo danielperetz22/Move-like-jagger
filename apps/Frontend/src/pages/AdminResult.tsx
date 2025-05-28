@@ -21,6 +21,7 @@ const quickList = [
   'veech shelo by Ariel Zilberg'
 ];
 
+// Map with just the song title as key (without the "by Artist" part)
 const artistMap: Record<string, string> = {
   'aba': 'Shlomi Shabat',
   'shape of you': 'Ed Sheeran',
@@ -44,28 +45,30 @@ const AdminResult: React.FC = () => {
     query.trim().length >= 3
       ? quickList.filter(name =>
           name.toLowerCase().includes(query.trim().toLowerCase())
-        ).map(title => ({
-          title,
-          artist: artistMap[title.toLowerCase()] || ''
-        }))
+        )
       : [];
 
-  // when suggestion clicked: create song, show, activate and navigate
-  const handleQuickSelect = async (title: string) => {
+  // Modified to extract just the song title part before "by"
+  const handleQuickSelect = async (fullTitle: string) => {
     setCreating(true);
     setError(null);
     try {
-      const artist = artistMap[title.toLowerCase()] || '';
+      // Extract the title part (before "by")
+      const titlePart = fullTitle.split(" by ")[0].trim();
+      const artist = artistMap[titlePart.toLowerCase()] || '';
+      
+      console.log(`Creating song: "${titlePart}" by "${artist}"`);
+      
       // 1) find or create song with correct artist
       const songRes = await axiosInstance.post<{ _id: string }>('/songs', {
         artist,
-        title
+        title: titlePart // Send just the title part, not the full string
       });
       const songId = songRes.data._id;
 
       // 2) create show
       const showRes = await axiosInstance.post<{ _id: string }>('/shows', {
-        name: `${artist} – ${title}`,
+        name: `${artist} – ${titlePart}`,
         songId
       });
       const showId = showRes.data._id;
@@ -75,6 +78,7 @@ const AdminResult: React.FC = () => {
 
       navigate(`/shows/${showId}`);
     } catch (e: any) {
+      console.error("Error creating song:", e);
       setError(e.response?.data?.message || e.message);
     } finally {
       setCreating(false);
@@ -115,34 +119,45 @@ const AdminResult: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return <div className="flex justify-center items-center h-screen bg-[#f4f2ef]">Loading...</div>;
   }
   if (!isAdmin) {
     return <Member />;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-          <p>{error}</p>
+    <div className="min-h-screen bg-[#f4f2ef] py-24" >
+      <div className="w-full max-w-sm md:max-w-xl lg:max-w-2xl xl:max-w-5xl mx-auto bg-white px-4 py-8 rounded-lg shadow-md">
+        {error && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Quick suggestions section with explicit title */}
+        <div className="p-6 mb-8">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold mb-4 text-[#e68c3a]">
+            Available songs with chords:
+          </h2>
+          
+          {suggestions.length > 0 ? (
+            <ListSongs
+              songs={suggestions}
+              onSelect={handleQuickSelect}
+            />
+          ) : (
+            <p className="text-gray-500 italic">Enter at least 3 characters to see song suggestions</p>
+          )}
+          
+          {creating && <p className="text-gray-500 mt-4">Starting session…</p>}
         </div>
-      )}
 
-      <h1 className="text-3xl font-bold mb-6 text-[#516578]">Admin Main Page</h1>
-
-      {/* Quick suggestions */}
-      <ListSongs
-        songs={suggestions.map(suggestion => suggestion.title)}
-        onSelect={handleQuickSelect}
-      />
-      {creating && <p className="text-gray-500 mb-4">Starting session…</p>}
-
-      {/* Full SongSearch form */}
-      <SongSearch
-        initialTitle={query}
-        onSongAdded={handleSongAdded}
-      />
+        {/* SongSearch component with hidden form */}
+        <SongSearch
+          initialTitle={query}
+          onSongAdded={handleSongAdded}
+        />
+      </div>
     </div>
   );
 };

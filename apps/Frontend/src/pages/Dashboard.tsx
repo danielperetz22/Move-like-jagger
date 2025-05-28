@@ -142,20 +142,19 @@ const Dashboard: React.FC = () => {
   }
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-          <p>{error}</p>
-        </div>
-      )}
-      
-      {isAdmin ? (
-          <div className="admin-container mt-8">
-            <h1 className="text-3xl font-bold mb-6 text-[#516578]">Admin Main Page</h1>
-            
+    <div className="min-h-screen bg-[#f4f2ef]">
+      <div className="container mx-auto px-4 py-8">
+        {error && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+            <p>{error}</p>
+          </div>
+        )}
+        
+        {isAdmin ? (
+          <div className="admin-container py-48 font-assistant">            
             {/* Song Search Box */}
-            <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-[#516578]">Search any song...</h2>
+            <div className="bg-white shadow-md rounded-lg p-6 mb-8 max-w-3xl mx-auto flex flex-col">
+              <h2 className="text-2xl font-semibold mb-4 text-[#e68c3a]">Search any song...</h2>
               <div className="search-container">
                 <form onSubmit={handleSearch} className="flex flex-col space-y-2">
                   {searchError && (
@@ -164,29 +163,45 @@ const Dashboard: React.FC = () => {
                     </div>
                   )}
                   
-                  <div className="flex space-x-2">
+                  <div className="relative">
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={handleSearchChange}
                       placeholder="Search (min 3 characters)"
-                      className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-2 pl-3 pr-10 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-[#60212e]"
+                      onKeyDown={(e) => e.key === 'Enter' && searchQuery.trim().length >= 3 && handleSearch(e)}
                     />
                     <button
                       type="submit"
                       disabled={searchQuery.trim().length < 3}
-                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-[#60212e] disabled:text-gray-300"
+                      aria-label="Search"
                     >
-                      Search
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-5 w-5" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+                        />
+                      </svg>
                     </button>
                   </div>
                 </form>
               </div>
             </div>
           </div>
-      ) : (
-        <Member />
-      )}
+        ) : (
+          <Member />
+        )}
+      </div>
     </div>
   );
 };
