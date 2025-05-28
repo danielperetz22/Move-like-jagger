@@ -9,12 +9,8 @@
   "routes": [
     {
       "src": "/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://ja-moveo-enon.vercel.app" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS, PUT, DELETE" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
-      ],
-      "dest": "api/index.ts"
+      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      "dest": "/api/index.ts"
     }
   ]
 }

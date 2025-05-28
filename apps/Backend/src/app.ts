@@ -18,7 +18,7 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
-const allowedOrigin = 'https://ja-moveo-enon.vercel.app/';
+const allowedOrigin = 'https://ja-moveo-enon.vercel.app';
 
 app.use(cors({
   origin: allowedOrigin,
@@ -33,6 +33,8 @@ app.options('*', cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
