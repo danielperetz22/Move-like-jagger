@@ -29,24 +29,20 @@ const LyricsDisplay: React.FC<Props> = ({ artist, title }) => {
       setError(null);
   
       try {
-        const { data: lyricsResp } = await axiosInstance.get<LyricsResponse>(
-          `/lyrics/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
-        );
+        const [{ data: lyricsResp }, { data: chordData }] = await Promise.all([
+          axiosInstance.get<LyricsResponse>(
+            `/lyrics/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+          ),
+          axiosInstance.get<ChordData[]>('/chords', { params: { title } })
+        ]);
         setLyrics(lyricsResp.lyrics || '');
-  
-        const { data: chordData } = await axiosInstance.get<ChordData[]>(
-          '/chords',
-          { params: { artist, title } }
-        );
         setChords(chordData);
-      } catch (err) {
-        console.error('Error fetching:', err);
+      } catch {
         setError('Failed to load content');
       } finally {
         setIsLoading(false);
       }
     };
-  
     fetchData();
   }, [artist, title]);
   
