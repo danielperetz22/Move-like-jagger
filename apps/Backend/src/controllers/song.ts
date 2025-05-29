@@ -14,7 +14,6 @@ export const getAllSongs = async (req: Request, res: Response, next: NextFunctio
     next(err);
   }
 };
-
 export const getSongById = async (req: Request<{id: string}>, res: Response, next: NextFunction): Promise<void> => {
   try {
     const song = await Song.findOne({ _id: req.params.id, admin: req.user!._id });
