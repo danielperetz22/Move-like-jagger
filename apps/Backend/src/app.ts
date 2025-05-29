@@ -20,7 +20,7 @@ const app = express();
 app.use(helmet());
 
 const corsOptions = {
-  origin: true,
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -29,11 +29,10 @@ const corsOptions = {
     "Accept",
     "Origin",
   ],
-  credentials: true,
 };
 
-app.use(cors(corsOptions)); // simple requests
-app.options("*", cors(corsOptions)); // preflight
+// Apply CORS middleware before any routes
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -69,3 +68,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
 });
 
 export default app;
+
+
