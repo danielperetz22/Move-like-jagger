@@ -12,7 +12,6 @@ interface AuthContextType {
     password: string;
     username: string;
     instrument: string;
-    profileImage?: File;
     admin?: boolean;
   }) => Promise<void>;
   logout: () => Promise<void>;
@@ -161,30 +160,24 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     password: string;
     username: string;
     instrument: string;
-    profileImage?: File;
     admin?: boolean;
   }) => {
     try {
-      // Create FormData if there's a profile image
       let requestData;
       
-      if (data.profileImage) {
         const formData = new FormData();
         formData.append('email', data.email);
         formData.append('password', data.password);
         formData.append('username', data.username);
         formData.append('instrument', data.instrument);
-        formData.append('profileImage', data.profileImage);
         if (data.admin !== undefined) {
           formData.append('admin', String(data.admin));
         }
         requestData = formData;
-      } else {
-        requestData = data;
-      }
+     
       
       const response = await axiosInstance.post<AuthResponse>('/auth/register', requestData, {
-        headers: data.profileImage ? { 'Content-Type': 'multipart/form-data' } : undefined
+        headers: { 'Content-Type': 'multipart/form-data' } 
       });
       
       // Extract tokens and user ID from the nested response structure
