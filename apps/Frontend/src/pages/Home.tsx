@@ -1,12 +1,12 @@
-import React from 'react';
-import Hero from '../components/Hero'; 
 
-const HomePage: React.FC = () => {
+import Features from '../components/Features';
+import Hero from '../components/Hero';
+
+export default function HomePage() {
   return (
-    <div >
-      <Hero />
-    </div>
+    <>
+    <Hero />
+    <Features />
+    </>
   );
-};
-
-export default HomePage;
+}

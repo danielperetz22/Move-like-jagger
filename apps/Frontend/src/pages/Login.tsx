@@ -88,7 +88,7 @@ const Login: React.FC = () => {
                 type="submit"
                 variant='outline'
                 isLoading={isLoading}
-                className="border-[#60212e] text-[#60212e] hover:bg-[#60212e] hover:text-white mt-8 transition-all hover:shadow-md group w-full"
+                className="border-[#60212e] text-[#60212e] hover:bg-[#60212e] hover:text-[#60212e] hover:font-semibold mt-8 transition-all hover:shadow-md group w-full"
                 disabled={isLoading}
               >
                 {isLoading ? (
