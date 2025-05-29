@@ -19,7 +19,7 @@ const ACCESS_TOKEN_SECRET: Secret = process.env.ACCESS_TOKEN_SECRET!;
 const REFRESH_TOKEN_SECRET: Secret = process.env.REFRESH_TOKEN_SECRET!;
 
 type Tokens = { accessToken: string; refreshToken: string };
-
+// Generates access and refresh tokens for a user
 function generateTokens(userId: string): Tokens {
   const accessExpiration = process.env.ACCESS_TOKEN_EXPIRY;
   const refreshExpiration = process.env.REFRESH_TOKEN_EXPIRY;
@@ -62,7 +62,7 @@ async function validateRefreshToken(token?: string): Promise<IUser> {
 
   return user;
 }
-
+ // Middleware to extract and validate refresh token
 export class UserController extends BaseController<IUser> {
   constructor() {
     super(userModel);
@@ -200,7 +200,7 @@ export class UserController extends BaseController<IUser> {
     }
   }
 }
-
+// Middleware to authenticate requests using JWT
 export const authMiddleware = (
   req: Request,
   res: Response,
@@ -231,7 +231,7 @@ export const authMiddleware = (
     next();
   });
 };
-
+// Middleware to search users by username or email
 export const searchUsers = async (
   req: Request,
   res: Response

@@ -9,7 +9,7 @@ export interface IUser extends Document {
   instrument: string;
   refreshTokens: string[];
 }
-
+// schema for user model
 const UserSchema: Schema = new Schema(
   {
     admin: { type: Boolean, default: false },
