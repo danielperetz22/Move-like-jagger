@@ -1,19 +1,11 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json", 
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "functions": {
-    "api/index.ts": {
-      "runtime": "vercel/node@18.x"
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/:path*",     
-      "destination": "/api/index.ts"
-    }
+    { "source": "/api/:path*", "destination": "/api/index.ts" }
   ],
   "headers": [
-    { 
+    {
       "source": "/api/:path*",
       "headers": [
         { "key": "Access-Control-Allow-Origin",     "value": "https://ja-moveo-enon.vercel.app" },
