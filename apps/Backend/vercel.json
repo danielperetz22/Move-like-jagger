@@ -7,16 +7,5 @@
       "methods": ["GET","POST","PUT","DELETE","OPTIONS"],
       "dest": "/api/index.ts"
     }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin",   "value": "https://ja-moveo-enon.vercel.app" },
-        { "key": "Access-Control-Allow-Methods",  "value": "GET,POST,PUT,DELETE,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers",  "value": "Content-Type,Authorization" },
-        { "key": "Access-Control-Allow-Credentials","value": "true" }
-      ]
-    }
   ]
 }
