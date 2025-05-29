@@ -12,7 +12,6 @@ if (!MONGO_URI) {
   process.exit(1);
 }
  
-
 const startServer = async (): Promise<void> => {
   try {
     await mongoose.connect(MONGO_URI, {
