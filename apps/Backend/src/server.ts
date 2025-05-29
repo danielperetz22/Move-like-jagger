@@ -28,14 +28,14 @@ const startServer = async (): Promise<void> => {
       console.log(`Server running on PORT ${PORT}`);
     });
   } catch (err) {
-    console.error(' Server startup error:', err);
+    console.error('Server startup error:', err);
     process.exit(1);
   }
 };
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  console.error(' Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 startServer();
