@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axiosInstance from '../axiosinstance';
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../axiosinstance";
 
 interface AuthContextType {
   token: string | null;
@@ -22,18 +22,28 @@ const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 export function useAuth(): AuthContextType {
   const ctx = React.useContext(AuthContext);
   if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return ctx;
 }
 
 type AuthProviderProps = { children: React.ReactNode };
 
-export function AuthProvider({ children }: AuthProviderProps): React.ReactElement {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [refreshToken, setRefreshToken] = useState<string | null>(localStorage.getItem('refreshToken'));
-  const [userId, setUserId] = useState<string | null>(localStorage.getItem('userId'));
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!localStorage.getItem('token'));
+export function AuthProvider({
+  children,
+}: AuthProviderProps): React.ReactElement {
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem("token")
+  );
+  const [refreshToken, setRefreshToken] = useState<string | null>(
+    localStorage.getItem("refreshToken")
+  );
+  const [userId, setUserId] = useState<string | null>(
+    localStorage.getItem("userId")
+  );
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    !!localStorage.getItem("token")
+  );
 
   // Add type definitions for auth responses
   interface TokenResponse {
@@ -59,36 +69,43 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
       if (token) {
         try {
           // Set token in axios headers
-          axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
+          axiosInstance.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${token}`;
+
           // Verify the token by making a request to a protected endpoint
-          await axiosInstance.get('/auth/me');
-          
+          await axiosInstance.get("/auth/me");
+
           // Token is valid, keep user logged in
           setIsAuthenticated(true);
         } catch (error) {
-          console.error('Token verification failed', error);
-          
+          console.error("Token verification failed", error);
+
           // Try to refresh the token if we have a refresh token
           if (refreshToken) {
             try {
-              const response = await axiosInstance.post<TokenResponse>('/auth/refresh-token', { refreshToken });
-              
+              const response = await axiosInstance.post<TokenResponse>(
+                "/auth/refresh-token",
+                { refreshToken }
+              );
+
               // Update tokens in state and localStorage
               const newToken = response.data.accessToken;
               const newRefreshToken = response.data.refreshToken;
-              
-              localStorage.setItem('token', newToken);
-              localStorage.setItem('refreshToken', newRefreshToken);
-              
+
+              localStorage.setItem("token", newToken);
+              localStorage.setItem("refreshToken", newRefreshToken);
+
               setToken(newToken);
               setRefreshToken(newRefreshToken);
               setIsAuthenticated(true);
-              
+
               // Update axios headers with new token
-              axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+              axiosInstance.defaults.headers.common[
+                "Authorization"
+              ] = `Bearer ${newToken}`;
             } catch (refreshError) {
-              console.error('Token refresh failed', refreshError);
+              console.error("Token refresh failed", refreshError);
               // Clear auth state if refresh token is invalid
               handleLogout(false);
             }
@@ -108,9 +125,9 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     // Only make the logout request if specified (to avoid infinite loops)
     if (makeRequest && token) {
       try {
-        await axiosInstance.post('/auth/logout');
+        await axiosInstance.post("/auth/logout");
       } catch (error) {
-        console.error('Logout request failed', error);
+        console.error("Logout request failed", error);
       }
     }
 
@@ -119,38 +136,43 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     setRefreshToken(null);
     setUserId(null);
     setIsAuthenticated(false);
-    
+
     // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userId');
-    
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userId");
+
     // Clear axios headers
-    delete axiosInstance.defaults.headers.common['Authorization'];
+    delete axiosInstance.defaults.headers.common["Authorization"];
   };
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axiosInstance.post<AuthResponse>('/auth/login', { email, password });
-      
+      const response = await axiosInstance.post<AuthResponse>("/auth/login", {
+        email,
+        password,
+      });
+
       // Extract tokens and user ID from the nested response structure
       const accessToken = response.data.tokens.accessToken;
       const refreshToken = response.data.tokens.refreshToken;
       const userId = response.data.user._id;
-      
-      localStorage.setItem('token', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('userId', userId);
-      
+
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("userId", userId);
+
       setToken(accessToken);
       setRefreshToken(refreshToken);
       setUserId(userId);
       setIsAuthenticated(true);
-      
+
       // Set token in axios headers
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      axiosInstance.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${accessToken}`;
     } catch (error) {
-      console.error('Login failed', error);
+      console.error("Login failed", error);
       throw error;
     }
   };
@@ -163,41 +185,31 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     admin?: boolean;
   }) => {
     try {
-      let requestData;
-      
-        const formData = new FormData();
-        formData.append('email', data.email);
-        formData.append('password', data.password);
-        formData.append('username', data.username);
-        formData.append('instrument', data.instrument);
-        if (data.admin !== undefined) {
-          formData.append('admin', String(data.admin));
-        }
-        requestData = formData;
-     
-      
-      const response = await axiosInstance.post<AuthResponse>('/auth/register', requestData, {
-        headers: { 'Content-Type': 'multipart/form-data' } 
-      });
-      
+      const response = await axiosInstance.post<AuthResponse>(
+        "/auth/register",
+        data
+      );
+
       // Extract tokens and user ID from the nested response structure
       const accessToken = response.data.tokens.accessToken;
       const refreshToken = response.data.tokens.refreshToken;
       const userId = response.data.user._id;
-      
-      localStorage.setItem('token', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('userId', userId);
-      
+
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("userId", userId);
+
       setToken(accessToken);
       setRefreshToken(refreshToken);
       setUserId(userId);
       setIsAuthenticated(true);
-      
+
       // Set token in axios headers
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      axiosInstance.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${accessToken}`;
     } catch (error) {
-      console.error('Registration failed', error);
+      console.error("Registration failed", error);
       throw error;
     }
   };
@@ -209,8 +221,11 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     isAuthenticated,
     login,
     register,
-    logout: () => handleLogout(true)
+    logout: () => handleLogout(true),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+
+
