@@ -1,72 +1,66 @@
 import dotenv from "dotenv";
+import initApp from "./server";
+import fs from "fs";
+import https from "https";
+
 dotenv.config();
 
-import express, { Request, Response, NextFunction } from "express";
-import helmet from "helmet";
-import cors from "cors";
-import morgan from "morgan";
-import cookieParser from "cookie-parser";
+const PORT = process.env.PORT || 4000;
 
-import authRoutes from "./routes/auth";
-import songRoutes from "./routes/song";
-import lyricsRoutes from "./routes/lyrics";
-import chordsRoutes from "./routes/chords";
-import showRoutes from "./routes/show";
-import geminiRoutes from "./routes/gemini";
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
 
-const app = express();
+const startApp = async (): Promise<void> => {
+  try {
+    const app = await initApp();
+    
+    if (process.env.NODE_ENV !== "production") {
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    } else {
+      try {
+        const key = fs.readFileSync("./client-key.pem");
+        const cert = fs.readFileSync("./client-cert.pem");
 
-// Security middleware
-app.use(helmet());
+        https.createServer({ key, cert }, app).listen(PORT, () => {
+          console.log(`HTTPS server running on https://localhost:${PORT}`);
+        });
+      } catch (err) {
+        console.error("Failed to read SSL certificates:", err);
+        console.log("Falling back to HTTP server...");
 
-const corsOptions = {
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept",
-    "Origin",
-  ],
+        app.listen(PORT, () => {
+          console.log(`Server running on http://localhost:${PORT}`);
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Server startup error:", err);
+    if (err instanceof Error) {
+      if (err.message.includes("ECONNREFUSED")) {
+        console.error("\nConnection refused. Please check if:");
+        console.error("1. Your MongoDB URI is correct");
+        console.error("2. Your IP address is whitelisted in MongoDB Atlas");
+        console.error("3. Your MongoDB Atlas cluster is running");
+      } else if (err.message.includes("Invalid scheme")) {
+        console.error(
+          "\nInvalid MongoDB URI format. The URI should start with 'mongodb://' or 'mongodb+srv://'"
+        );
+      } else if (err.message.includes("Authentication failed")) {
+        console.error(
+          "\nAuthentication failed. Please check your username and password in the connection string"
+        );
+      } else if (err.message.includes("getaddrinfo ENOTFOUND")) {
+        console.error("\nCould not resolve the MongoDB host. Please check:");
+        console.error("1. Your internet connection");
+        console.error("2. The hostname in your MongoDB URI is correct");
+      }
+    }
+    process.exit(1);
+  }
 };
 
-// Apply CORS middleware before any routes
-app.use(cors(corsOptions));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
-app.use(cookieParser());
-
-// Route setup
-app.use("/api/auth", authRoutes);
-app.use("/api/songs", songRoutes);
-app.use("/api/lyrics", lyricsRoutes);
-app.use("/api/chords", chordsRoutes);
-app.use("/api/shows", showRoutes);
-app.use("/api/gemini", geminiRoutes);
-
-// 404 Handler
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ message: "Not Found" });
-});
-
-// Global Error Handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
-  console.error("Server error:", err);
-
-  if (process.env.NODE_ENV !== "production") {
-    res.status(500).json({
-      error: err,
-    });
-  } else {
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
-  }
-});
-
-export default app;
-
-
+startApp();

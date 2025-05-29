@@ -1,2 +1,2 @@
-import app from '../src/app';
-export default app;
+import initApp from "../src/server";    
+export default initApp;

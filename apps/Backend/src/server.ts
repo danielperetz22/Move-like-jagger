@@ -1,75 +1,112 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import app from "./app";
+import dotenv from 'dotenv';
+dotenv.config({
+  path: process.env.NODE_ENV ? `./.env_${process.env.NODE_ENV}` : './.env',
+});
 
-dotenv.config();
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+import express, { Express, Request, Response, NextFunction } from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 
-const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI;
+// Import your routes
+import authRoutes from './routes/auth';
+import songRoutes from './routes/song';
+import lyricsRoutes from './routes/lyrics';
+import chordsRoutes from './routes/chords';
+import showRoutes from './routes/show';
+import geminiRoutes from './routes/gemini';
 
-if (!MONGO_URI) {
-  console.error("Missing MONGO_URI environment variable");
-  process.exit(1);
-}
+const app = express();
 
-const startServer = async (): Promise<void> => {
-  try {
-    console.log("Attempting to connect to MongoDB...");
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-    });
+// Security middleware
+app.use(helmet());
 
-    console.log("MongoDB connected successfully");
-    console.log(`Connected to database: ${mongoose.connection.name}`);
-
-    app.listen(PORT, () => {
-      console.log(`Server running on PORT ${PORT}`);
-    });
-  } catch (err) {
-    console.error("Server startup error:", err);
-    if (err instanceof Error) {
-      if (err.message.includes("ECONNREFUSED")) {
-        console.error("\nConnection refused. Please check if:");
-        console.error("1. Your MongoDB URI is correct");
-        console.error("2. Your IP address is whitelisted in MongoDB Atlas");
-        console.error("3. Your MongoDB Atlas cluster is running");
-      } else if (err.message.includes("Invalid scheme")) {
-        console.error(
-          "\nInvalid MongoDB URI format. The URI should start with 'mongodb://' or 'mongodb+srv://'"
-        );
-      } else if (err.message.includes("Authentication failed")) {
-        console.error(
-          "\nAuthentication failed. Please check your username and password in the connection string"
-        );
-      } else if (err.message.includes("getaddrinfo ENOTFOUND")) {
-        console.error("\nCould not resolve the MongoDB host. Please check:");
-        console.error("1. Your internet connection");
-        console.error("2. The hostname in your MongoDB URI is correct");
-      }
-    }
-    process.exit(1);
-  }
+const corsOptions = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
 };
 
-// Handle unhandled promise rejections
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Body parsing middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(morgan('dev'));
+app.use(cookieParser());
+
+app.use('/public', express.static('public'));
+
+// Route setup
+app.use('/api/auth', authRoutes);
+app.use('/api/songs', songRoutes);
+app.use('/api/lyrics', lyricsRoutes);
+app.use('/api/chords', chordsRoutes);
+app.use('/api/shows', showRoutes);
+app.use('/api/gemini', geminiRoutes);
+
+// 404 Handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ message: "Not Found" });
 });
 
-// Handle MongoDB connection errors
-mongoose.connection.on("error", (err) => {
-  console.error("MongoDB connection error:", err);
+// Global Error Handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
+  console.error("Server error:", err);
+
+  if (process.env.NODE_ENV !== "production") {
+    res.status(500).json({
+      error: err,
+    });
+  } else {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
 });
 
-mongoose.connection.on("disconnected", () => {
-  console.log("MongoDB disconnected");
-});
+const db = mongoose.connection;
+db.on('error', (error) => console.error('MongoDB connection error:', error));
+db.once('open', () => console.log('Connected to database'));
+db.on('disconnected', () => console.log('MongoDB disconnected'));
+db.on('reconnected', () => console.log('MongoDB reconnected'));
 
-mongoose.connection.on("reconnected", () => {
-  console.log("MongoDB reconnected");
-});
+const initApp = (): Promise<Express> => {
+  return new Promise<Express>((resolve, reject) => {
+    const MONGO_URI = process.env.MONGO_URI || process.env.DB_CONNECT;
+    
+    if (!MONGO_URI) {
+      reject('MONGO_URI/DB_CONNECT is not defined in environment variables');
+    } else {
+      console.log("Attempting to connect to MongoDB...");
+      mongoose
+        .connect(MONGO_URI, {
+          serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
+          socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+        })
+        .then(() => {
+          console.log("MongoDB connected successfully");
+          console.log(`Connected to database: ${mongoose.connection.name}`);
+          resolve(app);
+        })
+        .catch((error) => {
+          console.error("MongoDB connection error:", error);
+          reject(error);
+        });
+    }
+  });
+};
 
-startServer();
+export default initApp;
 
 
