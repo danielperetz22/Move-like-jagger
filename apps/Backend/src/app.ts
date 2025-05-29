@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 import initApp from "./server";
 
@@ -24,3 +25,5 @@ const startApp = async (): Promise<void> => {
 };
 
 export default startApp();
+
+
