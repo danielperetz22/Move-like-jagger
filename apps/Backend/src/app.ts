@@ -19,17 +19,15 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-const allowedOrigin = 'https://ja-moveo-enon.vercel.app';
-
 const corsOptions = {
-  origin: allowedOrigin,
+  origin: 'https://ja-moveo-enon.vercel.app',
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true,
 };
 
-app.use(cors(corsOptions));     // handles simple requests
-app.options('*', cors(corsOptions)); // handles preflight OPTIONS
+app.use(cors(corsOptions));            // simple requests
+app.options('*', cors(corsOptions));   // preflight
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -50,18 +48,18 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global Error Handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
-  console.error("Server error:", err);
+// app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
+//   console.error("Server error:", err);
 
-  if (process.env.NODE_ENV !== "production") {
-    res.status(500).json({
-      error: err,
-    });
-  } else {
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
-  }
-});
+//   if (process.env.NODE_ENV !== "production") {
+//     res.status(500).json({
+//       error: err,
+//     });
+//   } else {
+//     res.status(500).json({
+//       message: "Internal Server Error",
+//     });
+//   }
+// });
 
 export default app;
