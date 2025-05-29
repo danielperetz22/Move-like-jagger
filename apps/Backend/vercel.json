@@ -1,11 +1,26 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json", 
   "version": 2,
-  "builds": [{ "src": "api/index.ts", "use": "@vercel/node" }],
-  "routes": [
+  "functions": {
+    "api/index.ts": {
+      "runtime": "nodejs18.x"    
+    }
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "methods": ["GET","POST","PUT","DELETE","OPTIONS"],
-      "dest": "/api/index.ts"
+      "source": "/api/:path*",     
+      "destination": "/api/index.ts"
+    }
+  ],
+  "headers": [
+    { 
+      "source": "/api/:path*",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin",     "value": "https://ja-moveo-enon.vercel.app" },
+        { "key": "Access-Control-Allow-Methods",    "value": "GET,POST,PUT,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers",    "value": "Content-Type,Authorization" },
+        { "key": "Access-Control-Allow-Credentials","value": "true" }
+      ]
     }
   ]
 }
