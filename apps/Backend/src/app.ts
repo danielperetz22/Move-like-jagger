@@ -18,6 +18,7 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
+
 const allowedOrigin = 'https://ja-moveo-enon.vercel.app';
 
 const corsOptions = {
