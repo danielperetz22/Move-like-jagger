@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/app.ts",
-    "start": "tsc && ts-node src/server.ts",
+    "start": "tsc && ts-node src/app.ts",
     "build": "tsc",
     "test": "tsc && jest --runInBand",
     "test group": "tsc && jest --runInBand src/tests/group.test.ts"

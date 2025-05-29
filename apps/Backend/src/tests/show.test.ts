@@ -1,7 +1,7 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import app from '../app';
+import initApp from '../server';
 import userModel from '../models/auth';
 import songModel from '../models/song';
 import showModel from '../models/show';
@@ -27,7 +27,7 @@ beforeAll(async () => {
     username: 'adminuser',
     instrument: 'guitar'
   };
-  const adminRes = await request(app)
+  const adminRes = await request(initApp)
     .post('/api/auth/register')
     .send(adminData);
 
@@ -44,7 +44,7 @@ beforeAll(async () => {
     username: 'regularuser',
     instrument: 'drums'
   };
-  const userRes = await request(app)
+  const userRes = await request(initApp)
     .post('/api/auth/register')
     .send(userData);
 
@@ -52,7 +52,7 @@ beforeAll(async () => {
   regularUserId = userRes.body.user._id;
 
   // Create a group
-  const groupRes = await request(app)
+  const groupRes = await request(initApp)
     .post('/api/groups')
     .set('Authorization', `Bearer ${adminToken}`)
     .send({ 
@@ -87,7 +87,7 @@ beforeEach(async () => {
 describe('Show API', () => {
   describe('POST /api/shows', () => {
     it('should reject unauthenticated requests', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .post('/api/shows')
         .send({
           name: 'Test Show',
@@ -99,7 +99,7 @@ describe('Show API', () => {
     });
 
     it('should reject non-admin users from creating shows', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .post('/api/shows')
         .set('Authorization', `Bearer ${regularToken}`)
         .send({
@@ -113,7 +113,7 @@ describe('Show API', () => {
     });
 
     it('should allow admin to create a show', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .post('/api/shows')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -146,7 +146,7 @@ describe('Show API', () => {
     it('should return 404 for non-existent group', async () => {
       const fakeGroupId = new mongoose.Types.ObjectId().toString();
       
-      const res = await request(app)
+      const res = await request(initApp)
         .post('/api/shows')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -162,7 +162,7 @@ describe('Show API', () => {
     it('should return 404 for non-existent song', async () => {
       const fakeSongId = new mongoose.Types.ObjectId().toString();
       
-      const res = await request(app)
+      const res = await request(initApp)
         .post('/api/shows')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -179,7 +179,7 @@ describe('Show API', () => {
   describe('GET /api/shows/my-shows', () => {
     beforeEach(async () => {
       // Create a show for testing
-      await request(app)
+      await request(initApp)
         .post('/api/shows')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -190,12 +190,12 @@ describe('Show API', () => {
     });
 
     it('should reject unauthenticated requests', async () => {
-      const res = await request(app).get('/api/shows/my-shows');
+      const res = await request(initApp).get('/api/shows/my-shows');
       expect(res.status).toBe(401);
     });
 
     it('should return shows for admin user', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get('/api/shows/my-shows')
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -207,7 +207,7 @@ describe('Show API', () => {
     });
 
     it('should return shows for regular user (as participant)', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get('/api/shows/my-shows')
         .set('Authorization', `Bearer ${regularToken}`);
 
@@ -229,7 +229,7 @@ describe('Show API', () => {
   describe('PUT /api/shows/participation', () => {
     beforeEach(async () => {
       // Create a show for testing
-      const res = await request(app)
+      const res = await request(initApp)
         .post('/api/shows')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -241,7 +241,7 @@ describe('Show API', () => {
     });
 
     it('should reject unauthenticated requests', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .put('/api/shows/participation')
         .send({
           showId,
@@ -252,7 +252,7 @@ describe('Show API', () => {
     });
 
     it('should allow participant to update their status', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .put('/api/shows/participation')
         .set('Authorization', `Bearer ${regularToken}`)
         .send({
@@ -270,7 +270,7 @@ describe('Show API', () => {
     it('should return 404 for non-existent show or non-participant', async () => {
       const fakeShowId = new mongoose.Types.ObjectId().toString();
       
-      const res = await request(app)
+      const res = await request(initApp)
         .put('/api/shows/participation')
         .set('Authorization', `Bearer ${regularToken}`)
         .send({
@@ -286,7 +286,7 @@ describe('Show API', () => {
   describe('GET /api/shows/:id', () => {
     beforeEach(async () => {
       // Create a show for testing
-      const res = await request(app)
+      const res = await request(initApp)
         .post('/api/shows')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -298,12 +298,12 @@ describe('Show API', () => {
     });
 
     it('should reject unauthenticated requests', async () => {
-      const res = await request(app).get(`/api/shows/${showId}`);
+      const res = await request(initApp).get(`/api/shows/${showId}`);
       expect(res.status).toBe(401);
     });
 
     it('should return show details for creator', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get(`/api/shows/${showId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -315,7 +315,7 @@ describe('Show API', () => {
 
     it('should return show details for accepted participant', async () => {
       // First accept participation
-      await request(app)
+      await request(initApp)
         .put('/api/shows/participation')
         .set('Authorization', `Bearer ${regularToken}`)
         .send({
@@ -323,7 +323,7 @@ describe('Show API', () => {
           status: 'accepted'
         });
 
-      const res = await request(app)
+      const res = await request(initApp)
         .get(`/api/shows/${showId}`)
         .set('Authorization', `Bearer ${regularToken}`);
 
@@ -333,7 +333,7 @@ describe('Show API', () => {
     });
 
     it('should reject pending participants from viewing show details', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get(`/api/shows/${showId}`)
         .set('Authorization', `Bearer ${regularToken}`);
 
@@ -344,7 +344,7 @@ describe('Show API', () => {
     it('should return 404 for non-existent show', async () => {
       const fakeShowId = new mongoose.Types.ObjectId().toString();
       
-      const res = await request(app)
+      const res = await request(initApp)
         .get(`/api/shows/${fakeShowId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 

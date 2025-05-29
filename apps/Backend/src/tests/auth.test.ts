@@ -2,7 +2,7 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import nock from 'nock';
-import app from '../app';
+import initApp from '../server';
 
 let mongo: MongoMemoryServer;
 let accessToken: string;
@@ -20,7 +20,7 @@ beforeAll(async () => {
     username: 'testuser',
     instrument: 'guitar'
   };
-  const res = await request(app)
+  const res = await request(initApp)
     .post('/api/auth/register')
     .send(userData);
 
@@ -39,7 +39,7 @@ describe('Auth Endpoints', () => {
   // Add tests for new functionality
   describe('User Profile and Search', () => {
     it('GET /api/auth/me → returns current user details', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${accessToken}`);
       
@@ -54,13 +54,13 @@ describe('Auth Endpoints', () => {
     });
 
     it('GET /api/auth/me → rejects unauthenticated access', async () => {
-      const res = await request(app).get('/api/auth/me');
+      const res = await request(initApp).get('/api/auth/me');
       expect(res.status).toBe(401);
     });
 
     it('GET /api/auth/search → finds users by username', async () => {
       // Register another test user
-      await request(app)
+      await request(initApp)
         .post('/api/auth/register')
         .send({
           email: 'searchtest@example.com',
@@ -69,7 +69,7 @@ describe('Auth Endpoints', () => {
           instrument: 'piano'
         });
       
-      const res = await request(app)
+      const res = await request(initApp)
         .get('/api/auth/search?query=search')
         .set('Authorization', `Bearer ${accessToken}`);
       
@@ -83,7 +83,7 @@ describe('Auth Endpoints', () => {
     });
 
     it('GET /api/auth/search → finds users by email', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get('/api/auth/search?query=searchtest')
         .set('Authorization', `Bearer ${accessToken}`);
       
@@ -97,14 +97,14 @@ describe('Auth Endpoints', () => {
     });
 
     it('GET /api/auth/search → requires authentication', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get('/api/auth/search?query=test');
       
       expect(res.status).toBe(401);
     });
 
     it('GET /api/auth/search → requires query parameter', async () => {
-      const res = await request(app)
+      const res = await request(initApp)
         .get('/api/auth/search')
         .set('Authorization', `Bearer ${accessToken}`);
       
@@ -115,7 +115,7 @@ describe('Auth Endpoints', () => {
 
 describe('Protected Song CRUD', () => {
   it('rejects unauthenticated access to GET /api/songs', async () => {
-    const res = await request(app).get('/api/songs');
+    const res = await request(initApp).get('/api/songs');
     expect(res.status).toBe(401);
   });
 
@@ -131,7 +131,7 @@ describe('Protected Song CRUD', () => {
       ]
     };
 
-    const res = await request(app)
+    const res = await request(initApp)
       .post('/api/songs')
       .set('Authorization', `Bearer ${accessToken}`)
       .send(payload);
@@ -149,7 +149,7 @@ describe('Protected Song CRUD', () => {
   });
 
   it('GET /api/songs → returns only this admin’s songs', async () => {
-    const res = await request(app)
+    const res = await request(initApp)
       .get('/api/songs')
       .set('Authorization', `Bearer ${accessToken}`);
 
@@ -160,7 +160,7 @@ describe('Protected Song CRUD', () => {
   });
 
   it('GET /api/songs/:id → returns the specific song', async () => {
-    const res = await request(app)
+    const res = await request(initApp)
       .get(`/api/songs/${songId}`)
       .set('Authorization', `Bearer ${accessToken}`);
 
@@ -171,7 +171,7 @@ describe('Protected Song CRUD', () => {
 
   it('returns 404 for another admin’s songId', async () => {
     // create a second user
-    const res2 = await request(app)
+    const res2 = await request(initApp)
       .post('/api/auth/register')
       .send({
         email: 'foo@example.com',
@@ -182,7 +182,7 @@ describe('Protected Song CRUD', () => {
     const otherToken = res2.body.tokens.accessToken;
 
     // try to fetch the first song with the second user’s token
-    const res = await request(app)
+    const res = await request(initApp)
       .get(`/api/songs/${songId}`)
       .set('Authorization', `Bearer ${otherToken}`);
 
@@ -203,7 +203,7 @@ describe('Protected Song CRUD', () => {
         { id: 'g_major', name: 'G Major', notes: ['G','B','D'], intervals: ['P1','M3','P5'], midiKeys: [67,71,74] }
       ]);
 
-    const res = await request(app)
+    const res = await request(initApp)
       .get('/api/songs/search/Coldplay/Yellow?chords=C,G')
       .set('Authorization', `Bearer ${accessToken}`);
 
