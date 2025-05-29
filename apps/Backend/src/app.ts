@@ -63,4 +63,4 @@ const startApp = async (): Promise<void> => {
   }
 };
 
-startApp();
+export default startApp();
