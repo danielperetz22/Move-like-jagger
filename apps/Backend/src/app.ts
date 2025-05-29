@@ -30,8 +30,6 @@ const corsOptions = {
 app.use(cors(corsOptions));     // handles simple requests
 app.options('*', cors()); // handles preflight OPTIONS
 
-
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
