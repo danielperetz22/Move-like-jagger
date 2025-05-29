@@ -11,7 +11,6 @@ if (!MONGO_URI) {
   console.error("Missing MONGO_URI environment variable");
   process.exit(1);
 }
- 
 const startServer = async (): Promise<void> => {
   try {
     await mongoose.connect(MONGO_URI, {
