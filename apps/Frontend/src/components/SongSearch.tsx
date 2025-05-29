@@ -58,7 +58,7 @@ export const SongSearch: React.FC<SongSearchProps> = ({
         setIsLoading(false);
       }
     })();
-  }, [initialTitle]);
+  },[initialTitle]);
 
   // const handleSearch = async (e: React.FormEvent) => {
   //   e.preventDefault();
