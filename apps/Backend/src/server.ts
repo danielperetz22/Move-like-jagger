@@ -21,6 +21,7 @@ const startServer = async (): Promise<void> => {
       w: "majority",
       maxPoolSize: 10,
     });
+    
 
     console.log("MongoDB connected successfully");
 
