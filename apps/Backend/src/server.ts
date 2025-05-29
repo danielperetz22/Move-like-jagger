@@ -20,9 +20,9 @@ const startServer = async (): Promise<void> => {
 
     console.log('MongoDB connected');
 
-    // if (process.env.NODE_ENV !== 'production') {
-    //   mongoose.set('debug', true);
-    // }
+    if (process.env.NODE_ENV !== 'production') {
+      mongoose.set('debug', true);
+    }
 
     app.listen(PORT, () => {
       console.log(`Server running on PORT ${PORT}`);

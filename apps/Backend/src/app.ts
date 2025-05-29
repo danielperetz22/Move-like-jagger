@@ -48,18 +48,18 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global Error Handler
-// app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
-//   console.error("Server error:", err);
+app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
+  console.error("Server error:", err);
 
-//   if (process.env.NODE_ENV !== "production") {
-//     res.status(500).json({
-//       error: err,
-//     });
-//   } else {
-//     res.status(500).json({
-//       message: "Internal Server Error",
-//     });
-//   }
-// });
+  if (process.env.NODE_ENV !== "production") {
+    res.status(500).json({
+      error: err,
+    });
+  } else {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
 
 export default app;
