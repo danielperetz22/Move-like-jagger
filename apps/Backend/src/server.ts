@@ -5,7 +5,7 @@ import app from "./app";
 dotenv.config();
 
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://danielpertz22:Mld4Ahq3BNoVguLu@cluster0.dw2ajeq.mongodb.net/';
+const MONGO_URI = process.env.MONGO_URI 
 
 if (!MONGO_URI) {
   console.error("Missing MONGO_URI environment variable");
