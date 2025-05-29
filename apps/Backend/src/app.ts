@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 import initApp from "./server";
-import fs from "fs";
-import https from "https";
+
 
 dotenv.config();
 
@@ -15,28 +14,7 @@ process.on("unhandledRejection", (reason, promise) => {
 const startApp = async (): Promise<void> => {
   try {
     const app = await initApp();
-    
-    if (process.env.NODE_ENV !== "production") {
-      app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-      });
-    } else {
-      try {
-        const key = fs.readFileSync("./client-key.pem");
-        const cert = fs.readFileSync("./client-cert.pem");
-
-        https.createServer({ key, cert }, app).listen(PORT, () => {
-          console.log(`HTTPS server running on https://localhost:${PORT}`);
-        });
-      } catch (err) {
-        console.error("Failed to read SSL certificates:", err);
-        console.log("Falling back to HTTP server...");
-
-        app.listen(PORT, () => {
-          console.log(`Server running on http://localhost:${PORT}`);
-        });
-      }
-    }
+      
   } catch (err) {
     console.error("Server startup error:", err);
     if (err instanceof Error) {
