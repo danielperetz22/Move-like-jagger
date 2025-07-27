@@ -59,7 +59,7 @@ const Register: React.FC = () => {
       <div className="relative max-w-2xl w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="px-6 py-8">
           <div className="text-center mb-8">
-            <h2 className="text-4xl font-semibold text-[#e68c3a]">Join JaMoveo</h2>
+            <h2 className="text-4xl font-semibold text-[#e68c3a]">Join Us</h2>
             <p className=" text-gray-600 text-lg">Create your account and start making music</p>
           </div>
           

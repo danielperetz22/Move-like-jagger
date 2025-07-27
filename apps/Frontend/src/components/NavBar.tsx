@@ -25,7 +25,7 @@ const NavBar: React.FC = () => {
           onClick={() => navigate('/')}
         >
           <span className="text-3xl font-extrabold font-heebo text-[#b8a99d]">
-            JaMoveo
+            Move Like Jagger
           </span>
         </div>
         <div className="md:hidden">
