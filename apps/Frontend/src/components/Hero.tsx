@@ -21,7 +21,7 @@ const Hero: React.FC = () => {
     <div className="absolute inset-0" />
     <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
       <h1 className="font-heeboo mt-8 text-4xl md:text-6xl font-bold text-[#60212e]">
-        Let's Play Music Together with JaMoveo
+        Let's sing dance and play some  music!
       </h1>
       <p className="font-assistant mt-6 text-lg md:text-2xl font-semibold text-[#60212e] max-w-3xl">
       Follow chord progressions and lyrics in real time, controlled by the admin. Stay in sync with your bandmates during live rehearsals.      </p>
